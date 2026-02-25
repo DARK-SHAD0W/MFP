@@ -1,0 +1,20 @@
+meta {
+  name: Get Current User
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:3000/api/users/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc3MjAxMTc4MH0.Bfh4MrmqmwmIPhIXe4Lahs2h9uvUlGHraR1fiv6JduU
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
