@@ -19,7 +19,7 @@ npm run dev
 - Yarn alternative:
 
 ```bash
-yarn install     # installs deps
+yarn     # installs deps
 yarn dev    # if `dev` script in package.json is present
 ```
 
