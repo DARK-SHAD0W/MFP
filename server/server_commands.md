@@ -154,3 +154,44 @@ docker tag mfp-server:local myrepo/mfp-server:latest
 What it outputs:
 - No output on success; `docker images` will show the new tag.
 ---
+-- Edit files inside a running container (example)
+
+```bash
+# open an interactive shell inside the container (replace id/name)
+docker exec -it 7ebf1b1e7c02 ash
+```
+
+One-line: opens an interactive Alpine shell (`ash`) inside the container so you can run commands there.
+
+```bash
+# refresh Alpine package index
+apk update
+
+# install a simple editor (nano)
+apk add nano
+```
+
+One-line: update package lists and install `nano` (Alpine package manager `apk`).
+
+```bash
+# navigate to your app folder (adjust path as needed)
+cd /usr/src/app
+ls
+
+# edit the router file
+nano src/router.ts
+```
+
+One-line: move to the project, list files, open `src/router.ts` with `nano`. Save with Ctrl+O, exit with Ctrl+X.
+
+```bash
+# go back to parent directory and list
+cd .. && ls
+```
+
+One-line: return to the parent folder and show contents.
+
+```bash
+# (re)start the dev server inside the container or on the host
+npm run dev
+```
