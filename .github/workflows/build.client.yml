@@ -1,60 +1,75 @@
-#
+# Client Docker Image Build and Push Workflow
+# Automatically builds and pushes the client image when code changes
+
 name: Build and push Client Docker image
 
-# Configures this workflow to run every time a change is pushed to the branch called `main`.
+# Trigger conditions
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'dev']  # Run on main and dev branches
+    paths:
+      - 'client/**'  # Only run if files in client/ folder changed
+      - '.github/workflows/build.client.yml'  # Or if this workflow file changed
 
-# Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
+# Environment variables used throughout the workflow
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/client
+  REGISTRY: ghcr.io  # GitHub Container Registry
+  IMAGE_NAME: ${{ github.repository }}/client  # Image name: owner/repo/client
 
-# There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
-    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
-      #
+
     steps:
+      # Step 1: Get the code
       - name: Checkout repository
-        uses: actions/checkout@v5
-      # Uses the `docker/login-action` action to log in to the Container registry registry using the account and password that will publish the packages. Once published, the packages are scoped to the account defined here.
-      - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        uses: actions/checkout@v4
+
+      # Step 2: Login to GitHub Container Registry
+      - name: Log in to Container registry
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
+
+      # Step 3: Generate image tags
+      # This creates multiple tags for the same image:
+      # - Branch name (main, dev)
+      # - Commit SHA (main-a1b2c3d or dev-x9y8z7w)
+      # - "latest" (only on main branch)
+      # - "dev" (only on dev branch)
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      # This step uses the `docker/build-push-action` action to build the image, based on your repository's `Dockerfile`. If the build succeeds, it pushes the image to GitHub Packages.
-      # It uses the `context` parameter to define the build's context as the set of files located in the specified path. For more information, see [Usage](https://github.com/docker/build-push-action#usage) in the README of the `docker/build-push-action` repository.
-      # It uses the `tags` and `labels` parameters to tag and label the image with the output from the "meta" step.
+          tags: |
+            type=ref,event=branch  # Tag with branch name (main/dev)
+            type=sha,prefix={{branch}}-  # Tag with commit SHA (main-a1b2c3d)
+            type=raw,value=latest,enable={{is_default_branch}}  # Add "latest" tag on main branch only
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}  # Add "dev" tag on dev branch only
+
+      # Step 4: Build and push the Docker image
+      # Takes the Dockerfile from client/ folder and pushes to registry with all tags
       - name: Build and push Docker image
         id: push
-        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        uses: docker/build-push-action@v5
         with:
-          context: ./client
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-      
-      # This step generates an artifact attestation for the image, which is an unforgeable statement about where and how it was built. It increases supply chain security for people who consume the image. For more information, see [Using artifact attestations to establish provenance for builds](/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds).
+          context: ./client  # Use Dockerfile in client/ folder
+          push: true  # Push to registry (don't just build locally)
+          tags: ${{ steps.meta.outputs.tags }}  # Use tags generated in previous step
+          labels: ${{ steps.meta.outputs.labels }}  # Add metadata labels
+
+      # Step 5: Create security signature (proves GitHub Actions built this image)
       - name: Generate artifact attestation
         uses: actions/attest@v4
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
-      
