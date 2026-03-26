@@ -37,6 +37,10 @@ Below are common Docker commands you can use to build an image for the server, r
 
 ```bash
 docker build 
+
+docker build -t mfp-client .
+
+docker build --target dev -y img1 . && docker run --name api --rm img1 -p 3000:3000 img1 
 ```
 - List local images:
 
@@ -50,6 +54,8 @@ What it outputs:
 
 ```bash
 docker run 
+
+docker run --name mfp-client -p 5731:5731 mfp-client
 ```
 
 What it outputs:
@@ -154,3 +160,56 @@ docker tag mfp-server:local myrepo/mfp-server:latest
 What it outputs:
 - No output on success; `docker images` will show the new tag.
 ---
+-- Edit files inside a running container (example)
+
+```bash
+# open an interactive shell inside the container (replace id/name)
+docker exec -it 7ebf1b1e7c02 ash
+```
+
+One-line: opens an interactive Alpine shell (`ash`) inside the container so you can run commands there.
+
+```bash
+# refresh Alpine package index
+apk update
+
+# install a simple editor (nano)
+apk add nano
+```
+
+One-line: update package lists and install `nano` (Alpine package manager `apk`).
+
+```bash
+# navigate to your app folder (adjust path as needed)
+cd /usr/src/app
+ls
+
+# edit the router file
+nano src/router.ts
+```
+
+One-line: move to the project, list files, open `src/router.ts` with `nano`. Save with Ctrl+O, exit with Ctrl+X.
+
+```bash
+# go back to parent directory and list
+cd .. && ls
+```
+
+One-line: return to the parent folder and show contents.
+
+```bash
+# (re)start the dev server inside the container or on the host
+npm run dev
+```
+
+```bash
+docker build --no-cache -t mfp-server .
+```
+
+```bash
+docker rm -f mfp-server 2>/dev/null || true
+docker run --name mfp-server \
+  -p 3000:3000 \
+  -v "$(pwd)/data:/app/data" \
+  mfp-server
+```
