@@ -37,6 +37,10 @@ Below are common Docker commands you can use to build an image for the server, r
 
 ```bash
 docker build 
+
+docker build -t mfp-client .
+
+docker build --target dev -y img1 . && docker run --name api --rm img1 -p 3000:3000 img1 
 ```
 - List local images:
 
@@ -50,6 +54,8 @@ What it outputs:
 
 ```bash
 docker run 
+
+docker run --name mfp-client -p 5731:5731 mfp-client
 ```
 
 What it outputs:
@@ -194,4 +200,16 @@ One-line: return to the parent folder and show contents.
 ```bash
 # (re)start the dev server inside the container or on the host
 npm run dev
+```
+
+```bash
+docker build --no-cache -t mfp-server .
+```
+
+```bash
+docker rm -f mfp-server 2>/dev/null || true
+docker run --name mfp-server \
+  -p 3000:3000 \
+  -v "$(pwd)/data:/app/data" \
+  mfp-server
 ```

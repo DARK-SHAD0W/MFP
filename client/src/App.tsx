@@ -1,6 +1,8 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import type { Address, Coordinates, Notice, User } from "./types";
+import type { Address, Coordinates } from "./types";
+import { useApiFetch, useAuth, useAddresses, useNearbySearch, useGeolocation, useNotice } from "./hooks";
+import { reverseGeocode } from "./utils/geo";
 import AuthPage from "./components/AuthPage";
 import MapPanel from "./components/MapPanel";
 import NearbySection from "./components/NearbySection";
@@ -11,52 +13,31 @@ import UserCard from "./components/UserCard";
 
 const TOKEN_KEY = "mfp_token";
 
-type AuthMode = "signin" | "signup";
-
-type ReverseGeocodeResponse = {
-  features?: Array<{
-    properties?: {
-      label?: string;
-    };
-  }>;
-};
-
-async function safeJson<T>(response: Response): Promise<T | null> {
-  try {
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
-}
-
 function toNumber(value: string): number | null {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
 export default function App() {
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
-  const [me, setMe] = useState<User | null>(null);
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [nearby, setNearby] = useState<Address[]>([]);
-  const [notice, setNotice] = useState<Notice | null>(null);
-  const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [authMode, setAuthMode] = useState<AuthMode>("signin");
+  const [initialToken] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
+  const { notice, showNotice } = useNotice();
+  const apiFetch = useApiFetch(initialToken);
+  const { token, me, busyAction: authBusy, loadMe, register, login, logout } = useAuth(apiFetch);
+  const { addresses, busyAction: addressesBusy, load: loadAddresses, create: createAddress } = useAddresses(useApiFetch(token));
+  const { nearby, busyAction: nearbySusy, search: searchNearby } = useNearbySearch(useApiFetch(token));
+  const { geoBusy, requestLocation } = useGeolocation();
 
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-
   const [placeName, setPlaceName] = useState("");
   const [placeDescription, setPlaceDescription] = useState("");
   const [placeSearch, setPlaceSearch] = useState("");
-
   const [radiusKm, setRadiusKm] = useState("2");
   const [fromLat, setFromLat] = useState("");
   const [fromLng, setFromLng] = useState("");
-  const [geoBusy, setGeoBusy] = useState(false);
-
   const [selectedPlace, setSelectedPlace] = useState<Address | null>(null);
   const [addressLabels, setAddressLabels] = useState<Record<number, string>>({});
   const [mapTarget, setMapTarget] = useState<Coordinates | null>(null);
@@ -64,6 +45,7 @@ export default function App() {
   const [searchPreviewLabel, setSearchPreviewLabel] = useState<string | null>(null);
 
   const isAuthed = Boolean(token);
+  const busyAction = authBusy || addressesBusy || nearbySusy;
   const origin = useMemo<Coordinates | null>(() => {
     const lat = toNumber(fromLat);
     const lng = toNumber(fromLng);
@@ -71,14 +53,12 @@ export default function App() {
     return { lat, lng };
   }, [fromLat, fromLng]);
 
+  // Reload profile and addresses when token changes
   useEffect(() => {
     if (token) {
-      void loadMe();
-      void loadAddresses();
+      loadMe((msg) => showNotice("error", msg));
+      loadAddresses((msg) => showNotice("error", msg));
     } else {
-      setMe(null);
-      setAddresses([]);
-      setNearby([]);
       setSelectedPlace(null);
       setMapTarget(null);
       setMapTitle("Map preview");
@@ -86,15 +66,7 @@ export default function App() {
     }
   }, [token]);
 
-  useEffect(() => {
-    if (notice) {
-      const timer = window.setTimeout(() => setNotice(null), 6000);
-      return () => window.clearTimeout(timer);
-    }
-    return;
-  }, [notice]);
-
-  // Ensure the app favicon uses /favicon.ico (prevents default or cached icons)
+  // Set favicon
   useEffect(() => {
     try {
       const setFavicon = (href: string) => {
@@ -109,205 +81,109 @@ export default function App() {
           link.href = href;
         }
       };
-
       setFavicon("/favicon.ico");
     } catch {
-      // ignore in non-browser environments
+      // ignore
     }
   }, []);
 
-  const apiFetch = async <T,>(path: string, options: RequestInit = {}): Promise<T> => {
-    const headers = new Headers(options.headers || {});
-    if (options.body && !headers.has("Content-Type")) {
-      headers.set("Content-Type", "application/json");
-    }
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
-
-    const response = await fetch(path, {
-      ...options,
-      headers,
-      credentials: "include",
-    });
-
-    const data = await safeJson<T & { message?: string }>(response);
-
-    if (!response.ok) {
-      const message = data?.message || `Request failed (${response.status})`;
-      throw new Error(message);
-    }
-
-    return data as T;
-  };
-
-  const reverseGeocode = async (coords: Coordinates): Promise<string | null> => {
-    try {
-      const response = await fetch(
-        `https://data.geopf.fr/geocodage/reverse?lon=${coords.lng}&lat=${coords.lat}`,
-      );
-      if (!response.ok) return null;
-      const data = await safeJson<ReverseGeocodeResponse>(response);
-      return data?.features?.[0]?.properties?.label ?? null;
-    } catch {
-      return null;
-    }
-  };
-
-  const withBusy = async (name: string, action: () => Promise<void>) => {
-    setBusyAction(name);
-    setNotice(null);
-    try {
-      await action();
-    } finally {
-      setBusyAction(null);
-    }
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    setToken("");
-    setNotice({ type: "info", message: "Logged out." });
-  };
-
-  const loadMe = async () => {
-    await withBusy("me", async () => {
-      try {
-        const data = await apiFetch<{ item: User }>("/api/users/me");
-        setMe(data.item);
-      } catch (error) {
-        setMe(null);
-        const message = error instanceof Error ? error.message : "Unable to fetch user.";
-        if (message === "access denied") {
-          handleLogout();
-        } else {
-          setNotice({ type: "error", message });
-        }
-      }
-    });
-  };
-
-  const loadAddresses = async () => {
-    await withBusy("addresses", async () => {
-      try {
-        const data = await apiFetch<{ items: Address[] }>("/api/addresses");
-        setAddresses(data.items);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unable to load addresses.";
-        setNotice({ type: "error", message });
-      }
-    });
+    logout((msg) => showNotice("info", msg));
   };
 
   const handleRegister = async (event: FormEvent) => {
     event.preventDefault();
-    await withBusy("register", async () => {
-      try {
-        await apiFetch<{ item: User }>("/api/users", {
-          method: "POST",
-          body: JSON.stringify({
-            email: registerEmail,
-            password: registerPassword,
-          }),
-        });
-        setRegisterPassword("");
-        setLoginEmail(registerEmail);
-        setAuthMode("signin");
-        setNotice({ type: "success", message: "Account created. Please log in." });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unable to create account.";
-        setNotice({ type: "error", message });
-      }
+    await new Promise<void>((resolve) => {
+      register(
+        registerEmail,
+        registerPassword,
+        () => {
+          setRegisterPassword("");
+          setLoginEmail(registerEmail);
+          setAuthMode("signin");
+          showNotice("success", "Account created. Please log in.");
+          resolve();
+        },
+        (msg) => {
+          showNotice("error", msg);
+          resolve();
+        },
+      );
     });
   };
 
   const handleLogin = async (event: FormEvent) => {
     event.preventDefault();
-    await withBusy("login", async () => {
-      try {
-        const data = await apiFetch<{ token: string }>("/api/users/tokens", {
-          method: "POST",
-          body: JSON.stringify({
-            email: loginEmail,
-            password: loginPassword,
-          }),
-        });
-        localStorage.setItem(TOKEN_KEY, data.token);
-        setToken(data.token);
-        setLoginPassword("");
-        setNotice({ type: "success", message: "Welcome back." });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unable to login.";
-        setNotice({ type: "error", message });
-      }
+    await new Promise<void>((resolve) => {
+      login(
+        loginEmail,
+        loginPassword,
+        () => {
+          setLoginPassword("");
+          showNotice("success", "Welcome back.");
+          resolve();
+        },
+        (msg) => {
+          showNotice("error", msg);
+          resolve();
+        },
+      );
     });
   };
 
   const handleCreateAddress = async (event: FormEvent) => {
     event.preventDefault();
-    await withBusy("create", async () => {
-      try {
-        const data = await apiFetch<{ item: Address }>("/api/addresses", {
-          method: "POST",
-          body: JSON.stringify({
-            name: placeName,
-            description: placeDescription || null,
-            searchWord: placeSearch,
-          }),
-        });
-        setAddresses((current) => [data.item, ...current]);
-        setPlaceName("");
-        setPlaceDescription("");
-        setPlaceSearch("");
-        setNotice({ type: "success", message: "Place added." });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unable to add place.";
-        setNotice({ type: "error", message });
-      }
+    await new Promise<void>((resolve) => {
+      createAddress(
+        placeName,
+        placeDescription || null,
+        placeSearch,
+        () => {
+          setPlaceName("");
+          setPlaceDescription("");
+          setPlaceSearch("");
+          showNotice("success", "Place added.");
+          resolve();
+        },
+        (msg) => {
+          showNotice("error", msg);
+          resolve();
+        },
+      );
     });
   };
 
   const handleNearbySearch = async (event: FormEvent) => {
     event.preventDefault();
-    await withBusy("nearby", async () => {
-      const radius = Number(radiusKm);
-      const lat = Number(fromLat);
-      const lng = Number(fromLng);
+    if (!origin) {
+      showNotice("error", "Set an origin first (latitude and longitude required).");
+      return;
+    }
 
-      if (Number.isNaN(radius) || radius <= 0) {
-        setNotice({ type: "error", message: "Radius must be a positive number." });
-        return;
-      }
-      if (Number.isNaN(lat) || Number.isNaN(lng)) {
-        setNotice({ type: "error", message: "Latitude and longitude are required." });
-        return;
-      }
-
-      try {
-        const data = await apiFetch<{ items: Address[] }>("/api/addresses/searches", {
-          method: "POST",
-          body: JSON.stringify({
-            radius,
-            from: { lat, lng },
-          }),
-        });
-        setNearby(data.items);
-        setNotice({ type: "success", message: `${data.items.length} places found.` });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unable to search nearby places.";
-        setNotice({ type: "error", message });
-      }
+    await new Promise<void>((resolve) => {
+      searchNearby(
+        origin,
+        Number(radiusKm),
+        (count) => {
+          showNotice("success", `${count} places found.`);
+          resolve();
+        },
+        (msg) => {
+          showNotice("error", msg);
+          resolve();
+        },
+      );
     });
   };
 
   const applyOrigin = (
     coords: Coordinates,
     message = "Search origin updated.",
-    type: Notice["type"] = "info",
+    type: "info" | "success" = "info",
   ) => {
     setFromLat(coords.lat.toFixed(6));
     setFromLng(coords.lng.toFixed(6));
-    setNotice({ type, message });
+    showNotice(type, message);
     if (!selectedPlace) {
       setMapTarget(coords);
       setMapTitle("Search origin");
@@ -316,25 +192,9 @@ export default function App() {
   };
 
   const handleUseLocation = () => {
-    if (!navigator.geolocation) {
-      setNotice({ type: "error", message: "Geolocation is not supported in this browser." });
-      return;
-    }
-    setGeoBusy(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        applyOrigin(
-          { lat: position.coords.latitude, lng: position.coords.longitude },
-          "Location captured.",
-          "success",
-        );
-        setGeoBusy(false);
-      },
-      (error) => {
-        setGeoBusy(false);
-        setNotice({ type: "error", message: error.message || "Unable to read location." });
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
+    requestLocation(
+      (coords) => applyOrigin(coords, "Location captured.", "success"),
+      (msg) => showNotice("error", msg),
     );
   };
 
@@ -360,7 +220,7 @@ export default function App() {
 
   const handleShowOriginOnMap = () => {
     if (!origin) {
-      setNotice({ type: "info", message: "Set an origin first." });
+      showNotice("info", "Set an origin first.");
       return;
     }
     setSelectedPlace(null);
@@ -401,8 +261,8 @@ export default function App() {
               isAuthed={isAuthed}
               me={me}
               busyAction={busyAction}
-              onRefreshProfile={loadMe}
-              onRefreshAddresses={loadAddresses}
+              onRefreshProfile={() => loadMe((msg) => showNotice("error", msg))}
+              onRefreshAddresses={() => loadAddresses((msg) => showNotice("error", msg))}
             />
             <MapPanel
               coordinates={mapTarget}

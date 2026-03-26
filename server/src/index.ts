@@ -8,9 +8,9 @@ async function startApp() {
 
   try {
     await datasource.initialize();
-    console.log(`✅ connected to Sqlite db`);
+    console.log(`✅ connected to db: ${datasource.options.type}`);
 
-    app.listen(port, (err) => {
+    app.listen(port, "0.0.0.0", (err) => {
       if (err) {
         console.error(`🚨 unable to start server on port ${port}`);
       } else {
