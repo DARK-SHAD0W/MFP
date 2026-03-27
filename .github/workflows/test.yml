@@ -1,0 +1,82 @@
+# Workflow de tests automatiques
+# Exécute les tests unitaires Jest et les tests API Bruno à chaque push
+
+name: Tests
+
+on:
+  push:
+    branches: ['main', 'dev']  # Branches main et dev
+
+jobs:
+  # Job 1 : Tests unitaires Jest
+  test-jest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run Jest tests
+        working-directory: ./server
+        run: npx jest --coverage
+
+      - name: Upload Jest coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jest-coverage
+          path: server/coverage
+
+  # Job 2 : Tests API Bruno
+  test-bruno:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and start server with database
+        run: docker compose -f compose.test.yml up -d --build
+
+      - name: Install Bruno CLI
+        run: npm install -g @usebruno/cli
+
+      - name: Wait for server to be ready
+        run: |
+          for i in {1..60}; do
+            if curl -s http://localhost:3000/health > /dev/null 2>&1; then
+              echo "Server is ready!"
+              exit 0
+            fi
+            echo "Waiting for server... ($i/60)"
+            sleep 2
+          done
+          echo "Server failed to start"
+          docker compose -f compose.test.yml logs server
+          exit 1
+
+      - name: Run Bruno API tests
+        working-directory: ./server/bruno-tests
+        run: bru run --reporter-json results.json --reporter-html results.html
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bruno-test-results
+          path: |
+            server/bruno-tests/results.json
+            server/bruno-tests/results.html
+
+      - name: Show server logs on failure
+        if: failure()
+        run: docker compose -f compose.test.yml logs server
