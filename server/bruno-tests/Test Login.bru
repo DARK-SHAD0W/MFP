@@ -37,4 +37,7 @@ tests {
   test("Token should not be empty", function() {
     expect(res.body.token.length).to.be.greaterThan(0);
   });
+
+  // Save token for subsequent requests
+  bru.setVar("token", res.body.token);
 }
