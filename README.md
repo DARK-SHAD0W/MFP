@@ -701,11 +701,11 @@ The `main` and `dev` branches are protected with GitHub Rulesets to ensure code 
 #### Rules Configured
 
 - **Require a pull request before merging**: No direct push to `main` or `dev`, all changes must go through a PR
-- **Require status checks to pass**: The following checks must pass before a PR can be merged:
-  - `test-jest` — Jest unit tests
-  - `test-bruno` — Bruno API tests
+- **Require status checks to pass**: The following types of checks must pass before a PR can be merged:
+  - Jest unit tests (job/context will include the `test-jest` job)
+  - Bruno API tests (job/context will include the `test-bruno` job)
 
-  When configuring branch protection in GitHub, use these exact check names as they appear in the **Checks** tab (they must match the GitHub Actions check contexts exactly). If workflow or job names are renamed and the displayed check names change, update the branch protection rules accordingly; otherwise merges may be blocked even when CI succeeds.
+  When configuring branch protection in GitHub, **do not type `test-jest` or `test-bruno` manually**. Instead, open a PR, let CI run, then go to the PR’s **Checks** tab and copy the exact status check context strings shown there (for example, they may appear as ``Tests / test-jest`` or similar). Use those exact context strings in the branch protection rule. If workflow or job names are renamed and the displayed check names change, update the branch protection rules accordingly; otherwise merges may be blocked even when CI succeeds.
 #### Workflow
 
 1. Create a feature branch from `main` or `dev`
