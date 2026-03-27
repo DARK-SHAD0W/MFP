@@ -39,14 +39,14 @@ jobs:
 
       # Étape 4 : Se connecter à Docker Hub
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Étape 5 : Se connecter au registre de conteneurs GitHub
       - name: Log in to Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -66,7 +66,7 @@ jobs:
       # - « dev » (uniquement sur la branche dev)
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -80,7 +80,7 @@ jobs:
       # Prend le Dockerfile du dossier client/ et l'envoie au registre avec toutes les étiquettes
       - name: Build and push Docker image
         id: push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./client  # Utiliser le Dockerfile dans le dossier client/
           push: true  # Envoyer au registre (ne pas juste construire localement)

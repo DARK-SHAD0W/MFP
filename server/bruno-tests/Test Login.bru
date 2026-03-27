@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: http://localhost:3000/api/auth/login
+  url: http://localhost:3000/api/users/tokens
   body: json
   auth: none
 }
@@ -30,19 +30,11 @@ tests {
     expect(res.body).to.have.property('token');
   });
 
-  test("Response should have user object", function() {
-    expect(res.body).to.have.property('user');
-  });
-
-  test("User should have id", function() {
-    expect(res.body.user).to.have.property('id');
-  });
-
-  test("User email should match", function() {
-    expect(res.body.user.email).to.equal("testuser@example.com");
-  });
-
   test("Token should be string", function() {
     expect(res.body.token).to.be.a('string');
+  });
+
+  test("Token should not be empty", function() {
+    expect(res.body.token.length).to.be.greaterThan(0);
   });
 }

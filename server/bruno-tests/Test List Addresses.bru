@@ -22,15 +22,9 @@ tests {
     expect(res.getStatus()).to.equal(200);
   });
 
-  test("Response should be an array", function() {
-    expect(res.body).to.be.an('array');
-  });
-
-  test("Array should contain objects with required fields", function() {
-    if(res.body.length > 0) {
-      expect(res.body[0]).to.have.property('id');
-      expect(res.body[0]).to.have.property('address');
-    }
+  test("Response should have items array", function() {
+    expect(res.body).to.have.property('items');
+    expect(res.body.items).to.be.an('array');
   });
 
   test("Response headers should have content-type json", function() {

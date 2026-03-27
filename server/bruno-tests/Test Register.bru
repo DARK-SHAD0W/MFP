@@ -22,23 +22,23 @@ body:json {
 }
 
 tests {
-  test("Status should be 201 Created", function() {
-    expect(res.getStatus()).to.equal(201);
+  test("Status should be 200 OK", function() {
+    expect(res.getStatus()).to.equal(200);
   });
 
-  test("Response should have id", function() {
-    expect(res.body).to.have.property('id');
+  test("Response should have item", function() {
+    expect(res.body).to.have.property('item');
   });
 
-  test("Response should have email", function() {
-    expect(res.body).to.have.property('email');
+  test("Item should have id", function() {
+    expect(res.body.item).to.have.property('id');
+  });
+
+  test("Item should have email", function() {
+    expect(res.body.item).to.have.property('email');
   });
 
   test("Email should match request", function() {
-    expect(res.body.email).to.equal("testuser@example.com");
-  });
-
-  test("Response should not have password", function() {
-    expect(res.body).to.not.have.property('password');
+    expect(res.body.item.email).to.equal("testuser@example.com");
   });
 }

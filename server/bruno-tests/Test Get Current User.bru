@@ -22,19 +22,23 @@ tests {
     expect(res.getStatus()).to.equal(200);
   });
 
-  test("Response should have user id", function() {
-    expect(res.body).to.have.property('id');
+  test("Response should have item", function() {
+    expect(res.body).to.have.property('item');
   });
 
-  test("Response should have email", function() {
-    expect(res.body).to.have.property('email');
+  test("Item should have id", function() {
+    expect(res.body.item).to.have.property('id');
   });
 
-  test("User should have createdAt", function() {
-    expect(res.body).to.have.property('createdAt');
+  test("Item should have email", function() {
+    expect(res.body.item).to.have.property('email');
   });
 
-  test("User email should be string", function() {
-    expect(res.body.email).to.be.a('string');
+  test("Item should have createdAt", function() {
+    expect(res.body.item).to.have.property('createdAt');
+  });
+
+  test("Email should be string", function() {
+    expect(res.body.item.email).to.be.a('string');
   });
 }
