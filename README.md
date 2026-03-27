@@ -716,8 +716,8 @@ The `main` and `dev` branches are protected with GitHub Rulesets to ensure code 
 
 #### PR with Passing Tests
 
-<!-- PLACEHOLDER: Screenshot of a PR where all checks pass -->
+![PR with passing checks](image1.png)
 
 #### PR with Failing Tests
 
-<!-- PLACEHOLDER: Screenshot of a PR where checks fail and merge is blocked -->
+![PR with failing checks](image2.png)
