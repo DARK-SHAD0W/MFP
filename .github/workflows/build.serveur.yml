@@ -109,12 +109,10 @@ jobs:
       # Étape 3 : Puller et lancer le serveur Docker
       - name: Pull and run server container
         run: |
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }}
-          docker run -d \
-            --name mfp-server \
-            -p 3000:3000 \
-            -e NODE_ENV=test \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }}
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }}"
+          IMAGE_LOWER=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
+          docker pull "$IMAGE_LOWER"
+          docker run -d --name mfp-server -p 3000:3000 -e NODE_ENV=test "$IMAGE_LOWER"
 
       # Étape 4 : Installer pnpm
       - name: Install pnpm
