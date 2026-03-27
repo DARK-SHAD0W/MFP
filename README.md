@@ -581,7 +581,7 @@ npm run lint -- --fix
 
 ### Testing
 
-A dedicated **test workflow** (`test.yml`) runs automatically on every push to `main` and `dev`. It includes two independent jobs to validate backend functionality.
+A dedicated **test workflow** (`test.yml`) runs automatically for pull requests targeting `main` and `dev`, and whenever changes are merged into those branches. It includes two independent jobs to validate backend functionality.
 
 #### Jest Unit Tests
 
