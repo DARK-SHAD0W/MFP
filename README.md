@@ -22,7 +22,7 @@ MFP (My Favorite Places)
 
 ---
 
-Testing main branch workflow
+## Getting Started
 
 ## Docker Fundamentals
 
@@ -52,7 +52,7 @@ It creates a **Docker image** (a static template/snapshot).
 
 ---
 
-## Quick Start with Docker Compose
+## Quick Start
 
 ### Start the application
 ```bash
@@ -89,7 +89,9 @@ docker compose down -v
 
 ---
 
-## Docker Images Management
+## Docker Management
+
+### Docker Images
 
 ### List all images
 ```bash
@@ -144,11 +146,7 @@ docker search ubuntu
 docker pull postgres:16-alpine
 ```
 
----
-
-## Docker Containers Management
-
-### List running containers
+### Docker Containers
 ```bash
 docker ps
 docker container ls
@@ -224,11 +222,7 @@ docker exec -it container-name sh
 docker inspect container-name
 ```
 
----
-
-## Docker Networks Management
-
-### List all networks
+### Docker Networks
 ```bash
 docker network ls
 ```
@@ -264,11 +258,7 @@ docker network prune
 docker network inspect my-network
 ```
 
----
-
-## Docker Volumes Management
-
-### List all volumes
+### Docker Volumes
 ```bash
 docker volume ls
 ```
@@ -303,9 +293,7 @@ docker volume rm $(docker volume ls -q)
 docker run -d -v my-volume:/data --name my-container nginx
 ```
 
----
-
-## System Cleanup & Disk Space
+### System Cleanup
 
 ### Show Docker disk usage
 ```bash
@@ -324,7 +312,7 @@ docker system prune -a --volumes
 
 ---
 
-## Practical Examples for This Project
+## Practical Examples
 
 ### Clean and rebuild everything
 ```bash
@@ -370,39 +358,64 @@ docker push username/mfp-server:1.0
 
 The `compose.prod.yml` file pulls pre-built images from GitHub Container Registry (GHCR) instead of building locally.
 
-### Run Production Compose File
+## CI/CD Pipeline
+
+### Overview
+
+The project implements automated Docker image building and publishing through GitHub Actions workflows. Images are automatically built on code changes and pushed to GitHub Container Registry (GHCR).
+
+### Workflows
+
+Two main workflows handle the build and push pipeline:
+
+- **`build.client.yml`**: Builds and pushes the React frontend image
+- **`build.serveur.yml`**: Builds and pushes the Node.js backend image
+
+#### Trigger Conditions
+
+Workflows trigger on:
+- Push to `main` or `dev` branches
+- Only when relevant files change (client files for frontend, server files for backend)
+- Any changes to the workflow file itself
+
+#### Image Tagging Strategy
+
+Each build generates multiple tags for flexibility:
+- **Branch name tag**: `main` or `dev`
+- **Commit SHA tag**: `main-a1b2c3d` or `dev-x9y8z7w` (for version tracking)
+- **Latest tag**: Added only on `main` branch
+- **Dev tag**: Added only on `dev` branch
+
+#### Build Pipeline Steps
+
+1. Checkout code from repository
+2. Authenticate with GitHub Container Registry
+3. Extract and generate image metadata and tags
+4. Build Docker image and push to GHCR
+5. Generate security attestation (proves GitHub Actions built the image)
+
+### Production Deployment
+
+The `compose.prod.yml` file pulls pre-built images from GHCR instead of building locally:
+
 ```bash
 docker compose -f compose.prod.yml up
 ```
 
-### Run with Specific Version Tag
-```bash
-# Use latest production build
-docker compose -f compose.prod.yml up
-
-# Use specific SHA tag
-docker compose -f compose.prod.yml up
-```
-
-### Rebuild Local Images (Development)
-```bash
-# Use local compose.yml to build and run locally
-docker compose up --build
-```
-
-### Key Differences
+This separates development (local builds) from production (pre-built images):
 
 | Scenario | Command | What Happens |
 |----------|---------|--------------|
 | **Local Development** | `docker compose up --build` | Builds images locally from Dockerfile |
 | **Production** | `docker compose -f compose.prod.yml up` | Pulls pre-built images from GHCR |
-| **Dev Branch Images** | `docker compose -f compose.prod.yml up` + edit image tags to `:dev` | Pulls development branch images |
+| **Dev Branch Images** | Edit image tags to `:dev` in compose.prod.yml | Pulls development branch images |
 
 ### Update Images in Production
+
 ```bash
 # Pull latest images from registry
 docker compose -f compose.prod.yml pull
 
-# Then restart services
+# Restart services with updated images
 docker compose -f compose.prod.yml up -d
 ```

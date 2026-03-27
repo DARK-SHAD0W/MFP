@@ -11,6 +11,6 @@ npm run dev
 
 The dev server proxies `/api` to `http://localhost:3000`, so keep the server running there.
 
-## Testing
+## Testing CI/CD
 
-Main branch workflow test
+Dev branch workflow testing - round 2.
