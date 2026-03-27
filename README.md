@@ -13,7 +13,9 @@ A modern web application to discover, save, and manage your favorite places. Bui
 MFP (My Favorite Places)
 ├── client/          # React 18 + Vite frontend (Port 5173)
 ├── server/          # Node.js/Express backend (Port 3000)
-└── compose.yml      # Docker Compose configuration
+├── compose.yml      # Docker Compose for local development
+├── compose.prod.yml # Docker Compose for production (pulls from GHCR)
+└── compose.test.yml # Docker Compose for CI testing (builds locally)
 ```
 
 - **Frontend (Client)**: React application with Vite
@@ -369,7 +371,7 @@ The project implements automated Docker image building and publishing through Gi
 Two main workflows handle the build and push pipeline:
 
 - **`build.client.yml`**: Builds and pushes the React frontend image
-- **`build.serveur.yml`**: Builds and pushes the Node.js backend image
+- **`build.serveur.yml`**: Builds and pushes the Node.js backend image, runs Jest unit tests and Bruno API tests
 
 #### Trigger Conditions
 
@@ -574,3 +576,118 @@ To fix auto-fixable issues:
 ```bash
 npm run lint -- --fix
 ```
+
+---
+
+### Testing
+
+The server workflow includes two independent testing jobs to validate backend functionality.
+
+#### Jest Unit Tests
+
+**Jest** runs unit tests on the server code after the Docker image is built and pushed. It validates pure logic and HTTP endpoints without needing a database.
+
+##### What It Tests
+
+- **Health endpoint**: Verifies `GET /health` returns `200` with `{ status: "ok" }`
+- **404 handler**: Verifies unknown routes return `404`
+- **getDistance utility**: Validates the Haversine distance calculation (Paris-Lyon, Paris-London, symmetry)
+
+##### CI Pipeline
+
+The Jest job (`test-jest`) is linked to the build job (`needs: build-and-push-image`). It runs sequentially after the image is built:
+
+1. Checkout code
+2. Setup Node.js 20
+3. Install dependencies (`npm ci`)
+4. Run Jest with coverage (`npx jest --coverage`)
+5. Upload coverage report as artifact
+
+##### Local Testing
+
+```bash
+cd server
+npm install
+npm test
+```
+
+With coverage:
+
+```bash
+npm test -- --coverage
+```
+
+##### Adding New Tests
+
+Create test files next to the source files with the `.test.ts` extension:
+
+```
+server/src/
+├── app.ts
+├── app.test.ts              # Tests for app.ts
+└── utils/
+    ├── getDistance.ts
+    └── getDistance.test.ts   # Tests for getDistance.ts
+```
+
+#### Bruno API Tests
+
+**Bruno** runs end-to-end API tests against a live server instance. It validates the full request/response cycle with a real database.
+
+##### What It Tests
+
+- **Register** (`POST /api/users`): Creates a new user, verifies response structure
+- **Login** (`POST /api/users/tokens`): Authenticates user, verifies token generation
+- **Get Current User** (`GET /api/users/me`): Validates authenticated user retrieval
+- **List Addresses** (`GET /api/addresses`): Validates authenticated address listing
+
+Tests run sequentially (seq 1-4). The Login test saves the JWT token via `bru.setVar("token", ...)` for use in subsequent authenticated requests.
+
+##### CI Pipeline
+
+The Bruno job (`test-bruno`) is **independent** from other jobs (no `needs`). It builds the server locally using `compose.test.yml`:
+
+1. Checkout code
+2. Build and start server + database (`docker compose -f compose.test.yml up -d --build`)
+3. Install Bruno CLI (`npm install -g @usebruno/cli`)
+4. Wait for server health check (up to 2 minutes)
+5. Run Bruno tests (`bru run`)
+6. Upload test results (JSON + HTML) as artifacts
+
+##### Local Testing
+
+```bash
+# Start server and database
+docker compose up -d db server
+
+# Install Bruno CLI
+npm install -g @usebruno/cli
+
+# Run tests
+cd server/bruno-tests
+bru run
+```
+
+##### Adding New Tests
+
+Create `.bru` files in `server/bruno-tests/` with incrementing `seq` numbers:
+
+```
+server/bruno-tests/
+├── bruno.json                  # Collection config
+├── Test Register.bru           # seq: 1
+├── Test Login.bru              # seq: 2
+├── Test Get Current User.bru   # seq: 3
+├── Test List Addresses.bru     # seq: 4
+└── Test New Feature.bru        # seq: 5
+```
+
+#### Test Compose File
+
+The `compose.test.yml` file is a lightweight compose configuration used exclusively by CI for Bruno tests. Unlike `compose.prod.yml` (which pulls images from GHCR), it builds the server image from source:
+
+| File | Server Image | Services | Purpose |
+|------|-------------|----------|---------|
+| **compose.yml** | Builds locally | db, server, client | Local development |
+| **compose.prod.yml** | Pulls from GHCR | db, server, client | Production deployment |
+| **compose.test.yml** | Builds locally | db, server | CI testing (Bruno) |
