@@ -52,7 +52,7 @@ export default function MapPanel({ coordinates, title, addressLabel }: MapPanelP
         </>
       ) : (
         <div className="map-placeholder">
-          Select a place or set an origin to preview it on the map.
+          Select a place or set an origin to preview it on the map section.
         </div>
       )}
     </div>
