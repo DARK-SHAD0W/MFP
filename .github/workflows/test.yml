@@ -5,7 +5,9 @@ name: Tests
 
 on:
   push:
-    branches: ['main', 'dev']  # Branches main et dev
+    branches: ['main', 'dev']
+  pull_request:
+    branches: ['main', 'dev']  # Aussi sur les PR vers main et dev
 
 jobs:
   # Job 1 : Tests unitaires Jest
