@@ -419,3 +419,59 @@ docker compose -f compose.prod.yml pull
 # Restart services with updated images
 docker compose -f compose.prod.yml up -d
 ```
+
+### Fixing Docker Hub Rate Limiting
+
+#### Problem
+
+Docker Hub limits unauthenticated image pulls to 25 requests per 6 hours per IP address. When GitHub Actions tries to pull base images (e.g., `node:20-alpine`) during builds, it hits this rate limit error:
+
+```
+429 Too Many Requests: too many failed login attempts for username or IP address
+```
+
+#### Solution: Docker Hub Authentication
+
+To avoid rate limiting, add Docker Hub credentials to the workflows:
+
+#### Step 1: Create Docker Hub Access Token
+
+1. Go to Docker Hub: https://app.docker.com/settings/personal-access-tokens
+2. Click **"Generate new token"**
+3. Give it a name (e.g., `github-actions`)
+4. Set permissions to **Read, Write, Delete**
+5. Copy the token (displayed only once!)
+
+#### Step 2: Add GitHub Secrets
+
+1. Go to your GitHub repo settings: https://github.com/DARK-SHAD0W/MFP/settings/secrets/actions
+2. Click **"New repository secret"**
+3. Add secret #1:
+   - **Name:** `DOCKERHUB_USERNAME`
+   - **Value:** Your Docker Hub username
+4. Add secret #2:
+   - **Name:** `DOCKERHUB_TOKEN`
+   - **Value:** Your Docker Hub access token
+
+#### Step 3: Update Workflows
+
+Both workflow files (`build.client.yml` and `build.serveur.yml`) include this step:
+
+```yaml
+- name: Log in to Docker Hub
+  uses: docker/login-action@v3
+  with:
+    username: ${{ secrets.DOCKERHUB_USERNAME }}
+    password: ${{ secrets.DOCKERHUB_TOKEN }}
+```
+
+This step authenticates with Docker Hub BEFORE pulling base images, avoiding the rate limit.
+
+#### Updated Build Pipeline Steps
+
+1. Checkout code from repository
+2. **Authenticate with Docker Hub** (avoids rate limiting)
+3. Authenticate with GitHub Container Registry
+4. Extract and generate image metadata and tags
+5. Build Docker image and push to GHCR
+6. Generate security attestation
