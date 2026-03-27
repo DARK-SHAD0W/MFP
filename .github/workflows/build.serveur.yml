@@ -45,10 +45,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Étape 4 : Générer les étiquettes d'image
+      # Étape 4 : Récupérer la version pour le semantic versioning
+      - name: Read version
+        id: version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_OUTPUT
+
+      # Étape 5 : Générer les étiquettes d'image
       # Cela crée plusieurs étiquettes pour la même image :
       # - Nom de la branche (main, dev)
       # - SHA du commit (main-a1b2c3d ou dev-x9y8z7w)
+      # - Numéro de version (v1.0.0)
       # - « latest » (uniquement sur la branche main)
       # - « dev » (uniquement sur la branche dev)
       - name: Extract metadata (tags, labels) for Docker
@@ -59,10 +65,11 @@ jobs:
           tags: |
             type=ref,event=branch  # Étiquette avec le nom de la branche (main/dev)
             type=sha,prefix={{branch}}-  # Étiquette avec le SHA du commit (main-a1b2c3d)
+            type=raw,value=v${{ steps.version.outputs.VERSION }}  # Numéro de version (v1.0.0)
             type=raw,value=latest,enable={{is_default_branch}}  # Ajouter l'étiquette « latest » uniquement sur la branche main
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}  # Ajouter l'étiquette « dev » uniquement sur la branche dev
 
-      # Étape 5 : Construire et envoyer l'image Docker
+      # Étape 6 : Construire et envoyer l'image Docker
       # Prend le Dockerfile du dossier server/ et l'envoie au registre avec toutes les étiquettes
       - name: Build and push Docker image
         id: push
@@ -73,7 +80,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}  # Utiliser les étiquettes générées à l'étape précédente
           labels: ${{ steps.meta.outputs.labels }}  # Ajouter des étiquettes de métadonnées
 
-      # Étape 6 : Créer une signature de sécurité (prouve que GitHub Actions a construit cette image)
+      # Étape 7 : Créer une signature de sécurité (prouve que GitHub Actions a construit cette image)
       - name: Generate artifact attestation
         uses: actions/attest@v4
         with:
