@@ -1,0 +1,31 @@
+meta {
+  name: Search nearby addresses — authenticated
+  type: http
+  seq: 9
+}
+
+post {
+  url: http://localhost:3000/api/addresses/searches
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc3MjAxMTc4MH0.Bfh4MrmqmwmIPhIXe4Lahs2h9uvUlGHraR1fiv6JduU
+}
+
+body:json {
+  {
+  "radius": 10000,
+  "from": { "lat": 48.8584, "lng": 2.2945 }
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
