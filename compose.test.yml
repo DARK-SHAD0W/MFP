@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mfp-user
+      POSTGRES_PASSWORD: mfp-pswrd
+      POSTGRES_DB: mfp-db
+    ports:
+      - "5432:5432"
+    networks:
+      - mfp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: mfp-user
+      DB_PASSWORD: mfp-pswrd
+      DB_NAME: mfp-db
+    ports:
+      - "3000:3000"
+    networks:
+      - mfp-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  mfp-network:
+    driver: bridge

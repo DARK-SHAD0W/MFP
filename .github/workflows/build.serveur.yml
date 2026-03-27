@@ -98,28 +98,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Étape 2 : Installer pnpm
-      - name: Install pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 8
-
-      # Étape 3 : Installer Node.js
+      # Étape 2 : Installer Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
-      # Étape 4 : Installer les dépendances
+      # Étape 3 : Installer les dépendances
       - name: Install dependencies
         working-directory: ./server
-        run: pnpm install
+        run: npm ci
 
-      # Étape 5 : Exécuter les tests Jest
+      # Étape 4 : Exécuter les tests Jest
       - name: Run Jest tests
         working-directory: ./server
-        run: pnpm test --coverage
+        run: npx jest --coverage
 
       # Étape 6 : Upload les résultats des tests
       - name: Upload Jest coverage
@@ -140,23 +133,11 @@ jobs:
 
       # Étape 2 : Construire et lancer serveur + DB localement
       - name: Build and start server with database
-        run: |
-          # Activer le build local au lieu de puller l'image du registre
-          sed -i 's|#build:|build:|' compose.prod.yml
-          sed -i 's|#  context: ./server|  context: ./server|' compose.prod.yml
-          sed -i '/image: ghcr.io\/.*server.*/d' compose.prod.yml
-          # Lancer uniquement le serveur et la DB (pas le client)
-          docker compose -f compose.prod.yml up -d --build db server
+        run: docker compose -f compose.test.yml up -d --build
 
-      # Étape 3 : Installer pnpm
-      - name: Install pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 8
-
-      # Étape 4 : Installer Bruno CLI
+      # Étape 3 : Installer Bruno CLI
       - name: Install Bruno CLI
-        run: pnpm install -g @usebruno/cli
+        run: npm install -g @usebruno/cli
 
       # Étape 5 : Attendre que le serveur soit prêt
       - name: Wait for server to be ready
@@ -170,7 +151,7 @@ jobs:
             sleep 2
           done
           echo "Server failed to start"
-          docker compose -f compose.prod.yml logs server
+          docker compose -f compose.test.yml logs server
           exit 1
 
       # Étape 6 : Exécuter les tests Bruno
@@ -191,4 +172,4 @@ jobs:
       # Étape 8 : Afficher les logs du serveur si erreur
       - name: Show server logs on failure
         if: failure()
-        run: docker compose -f compose.prod.yml logs server
+        run: docker compose -f compose.test.yml logs server
