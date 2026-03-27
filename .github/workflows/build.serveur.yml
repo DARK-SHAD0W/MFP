@@ -88,8 +88,8 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
-  # Job 2 : Tester l'API avec Bruno
-  test-bruno:
+  # Job 2 : Tester les tests unitaires avec Jest (lié au build)
+  test-jest:
     runs-on: ubuntu-latest
     needs: build-and-push-image
 
@@ -98,52 +98,87 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Étape 2 : Se connecter à Docker Hub pour puller l'image
-      - name: Log in to Container registry
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Étape 3 : Lancer serveur + DB avec docker-compose
-      - name: Start server with database using docker-compose
-        run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }}"
-          IMAGE_LOWER=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
-          sed -i "s|image: ghcr.io/.*server.*|image: $IMAGE_LOWER|g" compose.prod.yml
-          docker compose -f compose.prod.yml up -d
-
-      # Étape 4 : Installer pnpm
+      # Étape 2 : Installer pnpm
       - name: Install pnpm
         uses: pnpm/action-setup@v5
         with:
           version: 8
 
-      # Étape 5 : Installer Bruno CLI
+      # Étape 3 : Installer Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      # Étape 4 : Installer les dépendances
+      - name: Install dependencies
+        working-directory: ./server
+        run: pnpm install
+
+      # Étape 5 : Exécuter les tests Jest
+      - name: Run Jest tests
+        working-directory: ./server
+        run: pnpm test --coverage
+
+      # Étape 6 : Upload les résultats des tests
+      - name: Upload Jest coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jest-coverage
+          path: server/coverage
+
+  # Job 3 : Tester l'API avec Bruno (indépendant, construit l'image localement)
+  test-bruno:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1 : Récupérer le code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Étape 2 : Construire et lancer serveur + DB localement
+      - name: Build and start server with database
+        run: |
+          # Activer le build local au lieu de puller l'image du registre
+          sed -i 's|#build:|build:|' compose.prod.yml
+          sed -i 's|#  context: ./server|  context: ./server|' compose.prod.yml
+          sed -i '/image: ghcr.io\/.*server.*/d' compose.prod.yml
+          # Lancer uniquement le serveur et la DB (pas le client)
+          docker compose -f compose.prod.yml up -d --build db server
+
+      # Étape 3 : Installer pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 8
+
+      # Étape 4 : Installer Bruno CLI
       - name: Install Bruno CLI
         run: pnpm install -g @usebruno/cli
 
-      # Étape 6 : Attendre que le serveur soit prêt
+      # Étape 5 : Attendre que le serveur soit prêt
       - name: Wait for server to be ready
         run: |
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -s http://localhost:3000/health > /dev/null 2>&1; then
-              echo "✓ Server is ready!"
+              echo "Server is ready!"
               exit 0
             fi
-            sleep 1
+            echo "Waiting for server... ($i/60)"
+            sleep 2
           done
-          echo "✗ Server failed to start"
-          docker logs mfp-server
+          echo "Server failed to start"
+          docker compose -f compose.prod.yml logs server
           exit 1
 
-      # Étape 7 : Exécuter les tests Bruno
+      # Étape 6 : Exécuter les tests Bruno
       - name: Run Bruno API tests
         working-directory: ./server/bruno-tests
         run: bru run --reporter-json results.json --reporter-html results.html
 
-      # Étape 8 : Upload les rapports
+      # Étape 7 : Upload les rapports
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
@@ -153,7 +188,7 @@ jobs:
             server/bruno-tests/results.json
             server/bruno-tests/results.html
 
-      # Étape 9 : Afficher les logs du serveur si erreur
+      # Étape 8 : Afficher les logs du serveur si erreur
       - name: Show server logs on failure
         if: failure()
-        run: docker logs mfp-server
+        run: docker compose -f compose.prod.yml logs server
