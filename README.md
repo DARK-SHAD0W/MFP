@@ -472,6 +472,66 @@ This step authenticates with Docker Hub BEFORE pulling base images, avoiding the
 1. Checkout code from repository
 2. **Authenticate with Docker Hub** (avoids rate limiting)
 3. Authenticate with GitHub Container Registry
-4. Extract and generate image metadata and tags
-5. Build Docker image and push to GHCR
-6. Generate security attestation
+4. **Read version number** from VERSION file
+5. Extract and generate image metadata and tags
+6. Build Docker image and push to GHCR
+7. Generate security attestation
+
+---
+
+### Semantic Versioning
+
+#### How It Works
+
+The project uses a **VERSION** file at the root to manage semantic versioning:
+
+```
+VERSION file: 1.0.0
+```
+
+Each build automatically generates images with the following tags:
+- `v1.0.0` (semantic version)
+- `main-a1b2c3d` (commit SHA on main)
+- `latest` (on main branch only)
+- `dev` (on dev branch only)
+
+#### Managing Versions
+
+To bump the version:
+
+1. Edit the `VERSION` file:
+   ```bash
+   # For patch release (bug fix)
+   1.0.0 → 1.0.1
+
+   # For minor release (new feature)
+   1.0.0 → 1.1.0
+
+   # For major release (breaking change)
+   1.0.0 → 2.0.0
+   ```
+
+2. Commit the change:
+   ```bash
+   git add VERSION
+   git commit -m "Bump version to 1.1.0"
+   git push origin main
+   ```
+
+3. The workflow will automatically:
+   - Build new images
+   - Tag them with `v1.1.0`
+   - Push to GHCR
+
+#### Image Tags Example
+
+For version `1.0.0`:
+- `ghcr.io/owner/mfp/client:v1.0.0` ← Semantic version tag
+- `ghcr.io/owner/mfp/client:main-a1b2c3d` ← Commit SHA
+- `ghcr.io/owner/mfp/client:latest` ← Latest on main
+- `ghcr.io/owner/mfp/client:main` ← Branch name
+
+For dev branch with version `1.0.0`:
+- `ghcr.io/owner/mfp/client:v1.0.0` ← Semantic version (shared)
+- `ghcr.io/owner/mfp/client:dev-x9y8z7w` ← Dev commit SHA
+- `ghcr.io/owner/mfp/client:dev` ← Dev branch tag
