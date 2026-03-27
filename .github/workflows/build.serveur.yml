@@ -87,3 +87,42 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+  # Job 2 : Tester l'API avec Bruno
+  test-bruno:
+    runs-on: ubuntu-latest
+    needs: build-and-push-image
+
+    steps:
+      # Étape 1 : Récupérer le code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Étape 2 : Installer pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      # Étape 3 : Installer Bruno CLI
+      - name: Install Bruno CLI
+        run: pnpm install -g @usebruno/cli
+
+      # Étape 4 : Attendre que le serveur soit prêt (facultatif)
+      - name: Wait for server to be ready
+        run: sleep 5
+
+      # Étape 5 : Exécuter les tests Bruno
+      - name: Run Bruno API tests
+        working-directory: ./server/bruno-tests
+        run: bru run --reporter-json results.json --reporter-html results.html
+
+      # Étape 6 : Upload les rapports
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: bruno-test-results
+          path: |
+            server/bruno-tests/results.json
+            server/bruno-tests/results.html

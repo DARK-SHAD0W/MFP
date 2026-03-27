@@ -1,0 +1,48 @@
+meta {
+  name: Test Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:3000/api/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+  "email": "testuser@example.com",
+  "password": "TestPassword123"
+  }
+}
+
+tests {
+  test("Status should be 200 OK", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should have token", function() {
+    expect(res.body).to.have.property('token');
+  });
+
+  test("Response should have user object", function() {
+    expect(res.body).to.have.property('user');
+  });
+
+  test("User should have id", function() {
+    expect(res.body.user).to.have.property('id');
+  });
+
+  test("User email should match", function() {
+    expect(res.body.user.email).to.equal("testuser@example.com");
+  });
+
+  test("Token should be string", function() {
+    expect(res.body.token).to.be.a('string');
+  });
+}

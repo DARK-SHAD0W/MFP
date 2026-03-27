@@ -1,0 +1,40 @@
+meta {
+  name: Test Get Current User
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:3000/api/users/me
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status should be 200 OK", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should have user id", function() {
+    expect(res.body).to.have.property('id');
+  });
+
+  test("Response should have email", function() {
+    expect(res.body).to.have.property('email');
+  });
+
+  test("User should have createdAt", function() {
+    expect(res.body).to.have.property('createdAt');
+  });
+
+  test("User email should be string", function() {
+    expect(res.body.email).to.be.a('string');
+  });
+}

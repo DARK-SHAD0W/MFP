@@ -1,0 +1,44 @@
+meta {
+  name: Test Register
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:3000/api/users
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+  "email": "testuser@example.com",
+  "password": "TestPassword123"
+  }
+}
+
+tests {
+  test("Status should be 201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response should have id", function() {
+    expect(res.body).to.have.property('id');
+  });
+
+  test("Response should have email", function() {
+    expect(res.body).to.have.property('email');
+  });
+
+  test("Email should match request", function() {
+    expect(res.body.email).to.equal("testuser@example.com");
+  });
+
+  test("Response should not have password", function() {
+    expect(res.body).to.not.have.property('password');
+  });
+}

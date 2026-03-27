@@ -1,0 +1,39 @@
+meta {
+  name: Test List Addresses
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:3000/api/addresses
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status should be 200 OK", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should be an array", function() {
+    expect(res.body).to.be.an('array');
+  });
+
+  test("Array should contain objects with required fields", function() {
+    if(res.body.length > 0) {
+      expect(res.body[0]).to.have.property('id');
+      expect(res.body[0]).to.have.property('address');
+    }
+  });
+
+  test("Response headers should have content-type json", function() {
+    expect(res.getHeader('content-type')).to.include('application/json');
+  });
+}
