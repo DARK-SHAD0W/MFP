@@ -470,12 +470,13 @@ This step authenticates with Docker Hub BEFORE pulling base images, avoiding the
 #### Updated Build Pipeline Steps
 
 1. Checkout code from repository
-2. **Authenticate with Docker Hub** (avoids rate limiting)
-3. Authenticate with GitHub Container Registry
-4. **Read version number** from VERSION file
-5. Extract and generate image metadata and tags
-6. Build Docker image and push to GHCR
-7. Generate security attestation
+2. **Run ESLint** - Validate code syntax (client only)
+3. Authenticate with Docker Hub (avoids rate limiting)
+4. Authenticate with GitHub Container Registry
+5. **Read version number** from VERSION file
+6. Extract and generate image metadata and tags
+7. Build Docker image and push to GHCR
+8. Generate security attestation
 
 ---
 
@@ -535,3 +536,41 @@ For dev branch with version `1.0.0`:
 - `ghcr.io/owner/mfp/client:v1.0.0` ← Semantic version (shared)
 - `ghcr.io/owner/mfp/client:dev-x9y8z7w` ← Dev commit SHA
 - `ghcr.io/owner/mfp/client:dev` ← Dev branch tag
+
+---
+
+### Code Quality: Linting
+
+#### ESLint for Client
+
+The client workflow includes an **ESLint** step to validate code syntax and catch common issues:
+
+```yaml
+- name: Run ESLint
+  working-directory: ./client
+  run: |
+    npm install
+    npm run lint --if-present || true
+```
+
+#### What It Does
+
+- Runs ESLint on the client code
+- Reports style violations and potential bugs
+- Uses the `|| true` flag to continue workflow even if linting fails (warnings only)
+
+#### Local Linting
+
+To lint locally before pushing:
+
+```bash
+cd client
+npm install
+npm run lint
+```
+
+To fix auto-fixable issues:
+
+```bash
+npm run lint -- --fix
+```
