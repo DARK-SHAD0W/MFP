@@ -581,11 +581,11 @@ npm run lint -- --fix
 
 ### Testing
 
-The server workflow includes two independent testing jobs to validate backend functionality.
+A dedicated **test workflow** (`test.yml`) runs automatically for pull requests targeting `main` and `dev`, and whenever changes are merged into those branches. It includes two independent jobs to validate backend functionality.
 
 #### Jest Unit Tests
 
-**Jest** runs unit tests on the server code after the Docker image is built and pushed. It validates pure logic and HTTP endpoints without needing a database.
+**Jest** runs unit tests on the server code. It validates pure logic and HTTP endpoints without needing a database.
 
 ##### What It Tests
 
@@ -595,7 +595,7 @@ The server workflow includes two independent testing jobs to validate backend fu
 
 ##### CI Pipeline
 
-The Jest job (`test-jest`) is linked to the build job (`needs: build-and-push-image`). It runs sequentially after the image is built:
+The Jest job (`test-jest`) runs in the dedicated `test.yml` workflow:
 
 1. Checkout code
 2. Setup Node.js 20
@@ -691,3 +691,33 @@ The `compose.test.yml` file is a lightweight compose configuration used exclusiv
 | **compose.yml** | Builds locally | db, server, client | Local development |
 | **compose.prod.yml** | Pulls from GHCR | db, server, client | Production deployment |
 | **compose.test.yml** | Builds locally | db, server | CI testing (Bruno) |
+
+---
+
+### Branch Protection
+
+The `main` and `dev` branches are protected with GitHub Rulesets to ensure code quality before merging.
+
+#### Rules Configured
+
+- **Require a pull request before merging**: No direct push to `main` or `dev`, all changes must go through a PR
+- **Require status checks to pass**: The following types of checks must pass before a PR can be merged:
+  - Jest unit tests (job/context will include the `test-jest` job)
+  - Bruno API tests (job/context will include the `test-bruno` job)
+
+  When configuring branch protection in GitHub, **do not type `test-jest` or `test-bruno` manually**. Instead, open a PR, let CI run, then go to the PR’s **Checks** tab and copy the exact status check context strings shown there (for example, they may appear as ``Tests / test-jest`` or similar). Use those exact context strings in the branch protection rule. If workflow or job names are renamed and the displayed check names change, update the branch protection rules accordingly; otherwise merges may be blocked even when CI succeeds.
+#### Workflow
+
+1. Create a feature branch from `main` or `dev`
+2. Make changes and push
+3. Open a Pull Request
+4. Wait for CI checks to pass (Jest + Bruno)
+5. Merge only if all checks are green
+
+#### PR with Passing Tests
+
+<!-- PLACEHOLDER: Screenshot of a PR where all checks pass -->
+
+#### PR with Failing Tests
+
+<!-- PLACEHOLDER: Screenshot of a PR where checks fail and merge is blocked -->
