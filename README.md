@@ -705,6 +705,7 @@ The `main` and `dev` branches are protected with GitHub Rulesets to ensure code 
   - `test-jest` — Jest unit tests
   - `test-bruno` — Bruno API tests
 
+  When configuring branch protection in GitHub, use these exact check names as they appear in the **Checks** tab (they must match the GitHub Actions check contexts exactly). If workflow or job names are renamed and the displayed check names change, update the branch protection rules accordingly; otherwise merges may be blocked even when CI succeeds.
 #### Workflow
 
 1. Create a feature branch from `main` or `dev`
