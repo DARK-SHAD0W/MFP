@@ -98,26 +98,56 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Étape 2 : Installer pnpm
+      # Étape 2 : Se connecter à Docker Hub pour puller l'image
+      - name: Log in to Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Étape 3 : Puller et lancer le serveur Docker
+      - name: Pull and run server container
+        run: |
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }}
+          docker run -d \
+            --name mfp-server \
+            -p 3000:3000 \
+            -e NODE_ENV=test \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }}
+
+      # Étape 4 : Installer pnpm
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
 
-      # Étape 3 : Installer Bruno CLI
+      # Étape 5 : Installer Bruno CLI
       - name: Install Bruno CLI
         run: pnpm install -g @usebruno/cli
 
-      # Étape 4 : Attendre que le serveur soit prêt (facultatif)
+      # Étape 6 : Attendre que le serveur soit prêt
       - name: Wait for server to be ready
-        run: sleep 5
+        run: |
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "✓ Server is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30 - Server not ready yet..."
+            sleep 2
+          done
+          echo "✗ Server failed to start"
+          docker logs mfp-server
+          exit 1
 
-      # Étape 5 : Exécuter les tests Bruno
+      # Étape 7 : Exécuter les tests Bruno
       - name: Run Bruno API tests
         working-directory: ./server/bruno-tests
         run: bru run --reporter-json results.json --reporter-html results.html
 
-      # Étape 6 : Upload les rapports
+      # Étape 8 : Upload les rapports
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
@@ -126,3 +156,8 @@ jobs:
           path: |
             server/bruno-tests/results.json
             server/bruno-tests/results.html
+
+      # Étape 9 : Afficher les logs du serveur si erreur
+      - name: Show server logs on failure
+        if: failure()
+        run: docker logs mfp-server
