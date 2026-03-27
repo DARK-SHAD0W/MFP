@@ -63,11 +63,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch  # Étiquette avec le nom de la branche (main/dev)
-            type=sha,prefix={{branch}}-  # Étiquette avec le SHA du commit (main-a1b2c3d)
-            type=raw,value=v${{ steps.version.outputs.VERSION }}  # Numéro de version (v1.0.0)
-            type=raw,value=latest,enable={{is_default_branch}}  # Ajouter l'étiquette « latest » uniquement sur la branche main
-            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}  # Ajouter l'étiquette « dev » uniquement sur la branche dev
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=v${{ steps.version.outputs.VERSION }}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
       # Étape 6 : Construire et envoyer l'image Docker
       # Prend le Dockerfile du dossier server/ et l'envoie au registre avec toutes les étiquettes
