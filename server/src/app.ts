@@ -1,10 +1,12 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import apiRouter from "./router";
 
 const app = express();
 
 // use JSON for req.body
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/health", (_, res) => {
   res.status(200).json({ status: "ok" });

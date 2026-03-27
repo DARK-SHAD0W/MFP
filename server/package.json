@@ -11,12 +11,14 @@
     "argon2": "^0.44.0",
     "axios": "^1.13.5",
     "better-sqlite3": "^12.6.2",
+    "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.16.3",
     "typeorm": "^0.3.28"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",

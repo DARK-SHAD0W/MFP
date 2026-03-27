@@ -19,12 +19,20 @@ function toNumber(value: string): number | null {
 }
 
 export default function App() {
-  const [initialToken] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
+  const [token, setTokenState] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
+  const setToken = (newToken: string) => {
+    if (newToken) {
+      localStorage.setItem(TOKEN_KEY, newToken);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+    setTokenState(newToken);
+  };
   const { notice, showNotice } = useNotice();
-  const apiFetch = useApiFetch(initialToken);
-  const { token, me, busyAction: authBusy, loadMe, register, login, logout } = useAuth(apiFetch);
-  const { addresses, busyAction: addressesBusy, load: loadAddresses, create: createAddress } = useAddresses(useApiFetch(token));
-  const { nearby, busyAction: nearbySusy, search: searchNearby } = useNearbySearch(useApiFetch(token));
+  const apiFetch = useApiFetch(token);
+  const { me, busyAction: authBusy, loadMe, register, login, logout } = useAuth(apiFetch, token, setToken);
+  const { addresses, busyAction: addressesBusy, load: loadAddresses, create: createAddress } = useAddresses(apiFetch);
+  const { nearby, busyAction: nearbySusy, search: searchNearby } = useNearbySearch(apiFetch);
   const { geoBusy, requestLocation } = useGeolocation();
 
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");

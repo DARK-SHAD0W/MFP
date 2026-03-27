@@ -85,6 +85,7 @@ export default function AuthPage({
                 value={loginPassword}
                 onChange={(event) => setLoginPassword(event.target.value)}
                 placeholder="Your password"
+                autoComplete="current-password"
                 required
               />
             </label>
@@ -114,6 +115,7 @@ export default function AuthPage({
                 value={registerPassword}
                 onChange={(event) => setRegisterPassword(event.target.value)}
                 placeholder="Create a password"
+                autoComplete="new-password"
                 required
               />
             </label>
