@@ -30,21 +30,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Étape 2 : Linter - Valider la syntaxe du code
-      - name: Run ESLint
-        working-directory: ./client
-        run: |
-          npm install
-          npm run lint --if-present || true
-
-      # Étape 4 : Se connecter à Docker Hub
+      # Étape 2 : Se connecter à Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Étape 5 : Se connecter au registre de conteneurs GitHub
+      # Étape 3 : Se connecter au registre de conteneurs GitHub
       - name: Log in to Container registry
         uses: docker/login-action@v4
         with:
@@ -52,19 +45,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Étape 6 : Récupérer la version pour le semantic versioning
+      # Étape 4 : Récupérer la version pour le semantic versioning
       - name: Read version
         id: version
         run: echo "VERSION=$(cat VERSION)" >> $GITHUB_OUTPUT
 
-      # Étape 7 : Générer les étiquettes d'image
+      # Étape 5 : Générer les étiquettes d'image
       # Cela crée plusieurs étiquettes pour la même image :
       # - Nom de la branche (main, dev)
       # - SHA du commit (main-a1b2c3d ou dev-x9y8z7w)
       # - Numéro de version (v1.0.0)
       # - « latest » (uniquement sur la branche main)
       # - « dev » (uniquement sur la branche dev)
-      # Étape 7 : Générer les étiquettes d'image
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v6
@@ -77,7 +69,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
-      # Étape 8 : Construire et envoyer l'image Docker
+      # Étape 6 : Construire et envoyer l'image Docker
       # Prend le Dockerfile du dossier client/ et l'envoie au registre avec toutes les étiquettes
       - name: Build and push Docker image
         id: push
@@ -88,7 +80,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}  # Utiliser les étiquettes générées à l'étape précédente
           labels: ${{ steps.meta.outputs.labels }}  # Ajouter des étiquettes de métadonnées
 
-      # Étape 9 : Créer une signature de sécurité (prouve que GitHub Actions a construit cette image)
+      # Étape 7 : Créer une signature de sécurité (prouve que GitHub Actions a construit cette image)
       - name: Generate artifact attestation
         uses: actions/attest@v4
         with:

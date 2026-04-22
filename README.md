@@ -22,10 +22,6 @@ MFP (My Favorite Places)
 - **Backend (Server)**: Express.js with TypeORM and PostgreSQL
 - **Database**: PostgreSQL 16 Alpine
 
----
-
-## Getting Started
-
 ## Docker Fundamentals
 
 ### What is a Dockerfile?
@@ -359,7 +355,7 @@ Both workflow files (`build.client.yml` and `build.serveur.yml`) include this st
 
 ```yaml
 - name: Log in to Docker Hub
-  uses: docker/login-action@v3
+   uses: docker/login-action@v4
   with:
     username: ${{ secrets.DOCKERHUB_USERNAME }}
     password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -377,7 +373,7 @@ This step authenticates with Docker Hub BEFORE pulling base images, avoiding the
 6. Build Docker image and push to GHCR
 7. Generate security attestation
 
-The client build workflow still includes a lightweight optional `npm run lint --if-present` step, but the enforced lint gate lives in `test.yml`.
+The enforced lint gate lives in `test.yml`, where client and server lint jobs run before backend tests.
 
 ---
 
