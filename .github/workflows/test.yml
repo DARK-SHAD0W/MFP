@@ -9,13 +9,15 @@ on:
     paths:
       - 'client/**'
       - 'server/**'
-      - '.github/workflows/test.yml'
+      - 'compose.test.yml'
+      - '.github/workflows/**'
   pull_request:
     branches: ['main', 'dev']
     paths:
       - 'client/**'
       - 'server/**'
-      - '.github/workflows/test.yml'
+      - 'compose.test.yml'
+      - '.github/workflows/**'
 
 jobs:
   # Job 0 : Détecte si le serveur ou le client a changé
