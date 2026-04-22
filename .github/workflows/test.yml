@@ -7,17 +7,100 @@ on:
   push:
     branches: ['main', 'dev']
     paths:
+      - 'client/**'
       - 'server/**'
       - '.github/workflows/test.yml'
   pull_request:
     branches: ['main', 'dev']
     paths:
+      - 'client/**'
       - 'server/**'
       - '.github/workflows/test.yml'
 
 jobs:
-  # Job 1 : Tests unitaires Jest
+  # Job 0 : Détecte si le serveur ou le client a changé
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      server_changed: ${{ steps.filter.outputs.server }}
+      client_changed: ${{ steps.filter.outputs.client }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            server:
+              - 'server/**'
+              - 'compose.test.yml'
+            client:
+              - 'client/**'
+
+  # Job 1 : Lint/format check côté client
+  lint-client:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.client_changed == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Run TypeScript check
+        working-directory: ./client
+        run: npx tsc --noEmit
+
+      - name: Run Prettier check
+        working-directory: ./client
+        run: npx prettier@3 --check .
+
+  # Job 2 : Lint/format check côté serveur (bloquant pour les tests)
+  lint-server:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.server_changed == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run TypeScript check
+        working-directory: ./server
+        run: npx tsc --noEmit
+
+      - name: Run Prettier check
+        working-directory: ./server
+        run: npx prettier@3 --check .
+
+  # Job 3 : Tests unitaires Jest
   test-jest:
+    needs: [detect-changes, lint-server]
+    if: needs.detect-changes.outputs.server_changed == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -44,8 +127,10 @@ jobs:
           name: jest-coverage
           path: server/coverage
 
-  # Job 2 : Tests API Bruno
+  # Job 4 : Tests API Bruno
   test-bruno:
+    needs: [detect-changes, lint-server]
+    if: needs.detect-changes.outputs.server_changed == 'true'
     runs-on: ubuntu-latest
 
     steps:
