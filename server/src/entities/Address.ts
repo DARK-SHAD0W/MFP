@@ -11,23 +11,23 @@ import { User } from "./User";
 @Entity()
 export class Address extends BaseEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ nullable: true })
-  description: string;
+  description!: string;
 
   @Column("float")
-  lng: number;
+  lng!: number;
 
   @Column("float")
-  lat: number;
+  lat!: number;
 
   @ManyToOne(() => User, (user) => user.addresses)
-  user: User;
+  user!: User;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

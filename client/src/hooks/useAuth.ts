@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { User } from "../types";
 
-type ApiFetchFn = <T,>(path: string, options?: RequestInit) => Promise<T>;
+type ApiFetchFn = <T>(path: string, options?: RequestInit) => Promise<T>;
 
 export function useAuth(
   apiFetch: ApiFetchFn,
@@ -18,7 +18,8 @@ export function useAuth(
       setMe(data.item);
     } catch (error) {
       setMe(null);
-      const message = error instanceof Error ? error.message : "Unable to fetch user.";
+      const message =
+        error instanceof Error ? error.message : "Unable to fetch user.";
       if (message === "access denied") {
         logout(onError);
       } else {
@@ -43,7 +44,8 @@ export function useAuth(
       });
       onSuccess();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to create account.";
+      const message =
+        error instanceof Error ? error.message : "Unable to create account.";
       onError(message);
     } finally {
       setBusyAction(null);
@@ -65,7 +67,8 @@ export function useAuth(
       setToken(data.token);
       onSuccess();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to login.";
+      const message =
+        error instanceof Error ? error.message : "Unable to login.";
       onError(message);
     } finally {
       setBusyAction(null);

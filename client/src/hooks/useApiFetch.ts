@@ -6,10 +6,10 @@ async function safeJson<T>(response: Response): Promise<T | null> {
   }
 }
 
-type ApiFetchFn = <T,>(path: string, options?: RequestInit) => Promise<T>;
+type ApiFetchFn = <T>(path: string, options?: RequestInit) => Promise<T>;
 
 export function useApiFetch(token: string): ApiFetchFn {
-  return async function apiFetch<T,>(
+  return async function apiFetch<T>(
     path: string,
     options: RequestInit = {},
   ): Promise<T> {

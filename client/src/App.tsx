@@ -1,7 +1,14 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type { Address, Coordinates } from "./types";
-import { useApiFetch, useAuth, useAddresses, useNearbySearch, useGeolocation, useNotice } from "./hooks";
+import {
+  useApiFetch,
+  useAuth,
+  useAddresses,
+  useNearbySearch,
+  useGeolocation,
+  useNotice,
+} from "./hooks";
 import { reverseGeocode } from "./utils/geo";
 import AuthPage from "./components/AuthPage";
 import MapPanel from "./components/MapPanel";
@@ -19,7 +26,9 @@ function toNumber(value: string): number | null {
 }
 
 export default function App() {
-  const [token, setTokenState] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
+  const [token, setTokenState] = useState(
+    () => localStorage.getItem(TOKEN_KEY) || "",
+  );
   const setToken = (newToken: string) => {
     if (newToken) {
       localStorage.setItem(TOKEN_KEY, newToken);
@@ -30,9 +39,25 @@ export default function App() {
   };
   const { notice, showNotice } = useNotice();
   const apiFetch = useApiFetch(token);
-  const { me, busyAction: authBusy, loadMe, register, login, logout } = useAuth(apiFetch, token, setToken);
-  const { addresses, busyAction: addressesBusy, load: loadAddresses, create: createAddress } = useAddresses(apiFetch);
-  const { nearby, busyAction: nearbySusy, search: searchNearby } = useNearbySearch(apiFetch);
+  const {
+    me,
+    busyAction: authBusy,
+    loadMe,
+    register,
+    login,
+    logout,
+  } = useAuth(apiFetch, token, setToken);
+  const {
+    addresses,
+    busyAction: addressesBusy,
+    load: loadAddresses,
+    create: createAddress,
+  } = useAddresses(apiFetch);
+  const {
+    nearby,
+    busyAction: nearbySusy,
+    search: searchNearby,
+  } = useNearbySearch(apiFetch);
   const { geoBusy, requestLocation } = useGeolocation();
 
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
@@ -47,10 +72,14 @@ export default function App() {
   const [fromLat, setFromLat] = useState("");
   const [fromLng, setFromLng] = useState("");
   const [selectedPlace, setSelectedPlace] = useState<Address | null>(null);
-  const [addressLabels, setAddressLabels] = useState<Record<number, string>>({});
+  const [addressLabels, setAddressLabels] = useState<Record<number, string>>(
+    {},
+  );
   const [mapTarget, setMapTarget] = useState<Coordinates | null>(null);
   const [mapTitle, setMapTitle] = useState("Map preview");
-  const [searchPreviewLabel, setSearchPreviewLabel] = useState<string | null>(null);
+  const [searchPreviewLabel, setSearchPreviewLabel] = useState<string | null>(
+    null,
+  );
 
   const isAuthed = Boolean(token);
   const busyAction = authBusy || addressesBusy || nearbySusy;
@@ -79,7 +108,9 @@ export default function App() {
     try {
       const setFavicon = (href: string) => {
         const head = document.getElementsByTagName("head")[0];
-        let link = head.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+        let link = head.querySelector(
+          "link[rel~='icon']",
+        ) as HTMLLinkElement | null;
         if (!link) {
           link = document.createElement("link");
           link.rel = "icon";
@@ -164,7 +195,10 @@ export default function App() {
   const handleNearbySearch = async (event: FormEvent) => {
     event.preventDefault();
     if (!origin) {
-      showNotice("error", "Set an origin first (latitude and longitude required).");
+      showNotice(
+        "error",
+        "Set an origin first (latitude and longitude required).",
+      );
       return;
     }
 
@@ -212,7 +246,10 @@ export default function App() {
     setMapTitle(address.name);
     setSearchPreviewLabel(null);
     if (!addressLabels[address.id]) {
-      const label = await reverseGeocode({ lat: address.lat, lng: address.lng });
+      const label = await reverseGeocode({
+        lat: address.lat,
+        lng: address.lng,
+      });
       if (label) {
         setAddressLabels((current) => ({ ...current, [address.id]: label }));
       }
@@ -238,7 +275,7 @@ export default function App() {
   };
 
   const selectedAddressLabel = selectedPlace
-    ? addressLabels[selectedPlace.id] ?? selectedPlace.name
+    ? (addressLabels[selectedPlace.id] ?? selectedPlace.name)
     : searchPreviewLabel;
 
   return (
@@ -270,7 +307,9 @@ export default function App() {
               me={me}
               busyAction={busyAction}
               onRefreshProfile={() => loadMe((msg) => showNotice("error", msg))}
-              onRefreshAddresses={() => loadAddresses((msg) => showNotice("error", msg))}
+              onRefreshAddresses={() =>
+                loadAddresses((msg) => showNotice("error", msg))
+              }
             />
             <MapPanel
               coordinates={mapTarget}

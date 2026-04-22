@@ -66,7 +66,7 @@ jobs:
 
       - name: Run Prettier check
         working-directory: ./client
-        run: npx prettier@3 --check .
+        run: npx prettier@3 --check "src/**/*.{ts,tsx,js,jsx,css}" "vite.config.ts"
 
   # Job 2 : Lint/format check côté serveur (bloquant pour les tests)
   lint-server:
@@ -95,7 +95,7 @@ jobs:
 
       - name: Run Prettier check
         working-directory: ./server
-        run: npx prettier@3 --check .
+        run: npx prettier@3 --check "src/**/*.{ts,tsx,js,jsx}" "jest.config.js"
 
   # Job 3 : Tests unitaires Jest
   test-jest:

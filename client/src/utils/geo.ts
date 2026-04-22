@@ -16,7 +16,10 @@ async function safeJson<T>(response: Response): Promise<T | null> {
   }
 }
 
-export function getDistanceKm(point1: Coordinates, point2: Coordinates): number {
+export function getDistanceKm(
+  point1: Coordinates,
+  point2: Coordinates,
+): number {
   const earthRadius = 6371;
   const diffLat = ((point1.lat - point2.lat) * Math.PI) / 180;
   const diffLng = ((point1.lng - point2.lng) * Math.PI) / 180;
@@ -30,7 +33,9 @@ export function getDistanceKm(point1: Coordinates, point2: Coordinates): number 
   return earthRadius * line;
 }
 
-export async function reverseGeocode(coords: Coordinates): Promise<string | null> {
+export async function reverseGeocode(
+  coords: Coordinates,
+): Promise<string | null> {
   try {
     const response = await fetch(
       `https://data.geopf.fr/geocodage/reverse?lon=${coords.lng}&lat=${coords.lat}`,
