@@ -95,222 +95,69 @@ docker compose down -v
 
 ### Docker Images
 
-### List all images
-```bash
-docker images
-docker image ls
-```
-
-### Build an image from Dockerfile
-```bash
-docker build -t my-image-name:1.0 ./server
-```
-
-### Tag an image
-```bash
-docker tag my-image-name:1.0 my-image-name:latest
-docker tag my-image-name:1.0 username/my-image-name:1.0
-```
-
-### Remove a specific image
-```bash
-docker rmi image-name:tag
-docker rmi image-id
-```
-
-### Remove an image forcefully
-```bash
-docker rmi -f image-name:tag
-```
-
-### Delete all unused images
-```bash
-docker image prune
-```
-
-### Delete all images (including used ones)
-```bash
-docker rmi $(docker images -q)
-```
-
-### Delete all images forcefully
-```bash
-docker rmi -f $(docker images -q)
-```
-
-### Search for an image (from Docker Hub)
-```bash
-docker search ubuntu
-```
-
-### Pull an image from Docker Hub
-```bash
-docker pull postgres:16-alpine
-```
+| Command | Description |
+|---|---|
+| `docker images`<br>`docker image ls` | List all images |
+| `docker build -t my-image-name:1.0 ./server` | Build an image from a Dockerfile |
+| `docker tag my-image-name:1.0 my-image-name:latest`<br>`docker tag my-image-name:1.0 username/my-image-name:1.0` | Tag an image |
+| `docker rmi image-name:tag`<br>`docker rmi image-id` | Remove a specific image |
+| `docker rmi -f image-name:tag` | Remove an image forcefully |
+| `docker image prune` | Delete all unused images |
+| `docker rmi $(docker images -q)` | Delete all images, including used ones |
+| `docker rmi -f $(docker images -q)` | Delete all images forcefully |
+| `docker search ubuntu` | Search for an image from Docker Hub |
+| `docker pull postgres:16-alpine` | Pull an image from Docker Hub |
 
 ### Docker Containers
-```bash
-docker ps
-docker container ls
-```
 
-### List all containers (including stopped)
-```bash
-docker ps -a
-docker container ls -a
-```
-
-### Run a container
-```bash
-docker run -d --name my-container -p 8080:80 nginx
-```
-
-### Start a stopped container
-```bash
-docker start container-name
-docker start container-id
-```
-
-### Stop a running container
-```bash
-docker stop container-name
-```
-
-### Kill a container (force stop)
-```bash
-docker kill container-name
-```
-
-### Remove a stopped container
-```bash
-docker rm container-name
-```
-
-### Remove a running container (force)
-```bash
-docker rm -f container-name
-```
-
-### Delete all stopped containers
-```bash
-docker container prune
-```
-
-### Delete all containers (stopped and running)
-```bash
-docker rm $(docker ps -aq)
-```
-
-### Delete all containers forcefully
-```bash
-docker rm -f $(docker ps -aq)
-```
-
-### View container logs
-```bash
-docker logs container-name
-docker logs -f container-name        # Follow logs
-docker logs --tail 100 container-name # Last 100 lines
-```
-
-### Execute a command in a running container
-```bash
-docker exec -it container-name bash
-docker exec -it container-name sh
-```
-
-### Inspect container details
-```bash
-docker inspect container-name
-```
+| Command | Description |
+|---|---|
+| `docker ps`<br>`docker container ls` | List running containers |
+| `docker ps -a`<br>`docker container ls -a` | List all containers, including stopped ones |
+| `docker run -d --name my-container -p 8080:80 nginx` | Run a container |
+| `docker start container-name`<br>`docker start container-id` | Start a stopped container |
+| `docker stop container-name` | Stop a running container |
+| `docker kill container-name` | Kill a container forcefully |
+| `docker rm container-name` | Remove a stopped container |
+| `docker rm -f container-name` | Remove a running container forcefully |
+| `docker container prune` | Delete all stopped containers |
+| `docker rm $(docker ps -aq)` | Delete all containers, stopped and running |
+| `docker rm -f $(docker ps -aq)` | Delete all containers forcefully |
+| `docker logs container-name`<br>`docker logs -f container-name`<br>`docker logs --tail 100 container-name` | View container logs |
+| `docker exec -it container-name bash`<br>`docker exec -it container-name sh` | Execute a command in a running container |
+| `docker inspect container-name` | Inspect container details |
 
 ### Docker Networks
-```bash
-docker network ls
-```
 
-### Create a network
-```bash
-docker network create my-network
-docker network create --driver bridge my-network
-```
-
-### Connect a container to a network
-```bash
-docker network connect my-network container-name
-```
-
-### Disconnect a container from a network
-```bash
-docker network disconnect my-network container-name
-```
-
-### Remove a network
-```bash
-docker network rm my-network
-```
-
-### Remove all unused networks
-```bash
-docker network prune
-```
-
-### Inspect a network (see connected containers)
-```bash
-docker network inspect my-network
-```
+| Command | Description |
+|---|---|
+| `docker network ls` | List Docker networks |
+| `docker network create my-network`<br>`docker network create --driver bridge my-network` | Create a network |
+| `docker network connect my-network container-name` | Connect a container to a network |
+| `docker network disconnect my-network container-name` | Disconnect a container from a network |
+| `docker network rm my-network` | Remove a network |
+| `docker network prune` | Remove all unused networks |
+| `docker network inspect my-network` | Inspect a network and its connected containers |
 
 ### Docker Volumes
-```bash
-docker volume ls
-```
 
-### Create a volume
-```bash
-docker volume create my-volume
-```
-
-### Inspect a volume
-```bash
-docker volume inspect my-volume
-```
-
-### Remove a volume
-```bash
-docker volume rm my-volume
-```
-
-### Remove all unused volumes
-```bash
-docker volume prune
-```
-
-### Remove all volumes (including used)
-```bash
-docker volume rm $(docker volume ls -q)
-```
-
-### Mount a volume when running a container
-```bash
-docker run -d -v my-volume:/data --name my-container nginx
-```
+| Command | Description |
+|---|---|
+| `docker volume ls` | List Docker volumes |
+| `docker volume create my-volume` | Create a volume |
+| `docker volume inspect my-volume` | Inspect a volume |
+| `docker volume rm my-volume` | Remove a volume |
+| `docker volume prune` | Remove all unused volumes |
+| `docker volume rm $(docker volume ls -q)` | Remove all volumes, including used ones |
+| `docker run -d -v my-volume:/data --name my-container nginx` | Mount a volume when running a container |
 
 ### System Cleanup
 
-### Show Docker disk usage
-```bash
-docker system df
-```
-
-### Remove all unused data (images, containers, networks, volumes)
-```bash
-docker system prune
-```
-
-### Aggressive cleanup (removes all unused data forcefully)
-```bash
-docker system prune -a --volumes
-```
+| Command | Description |
+|---|---|
+| `docker system df` | Show Docker disk usage |
+| `docker system prune` | Remove all unused data: images, containers, networks, and volumes |
+| `docker system prune -a --volumes` | Aggressive cleanup that removes all unused data forcefully |
 
 ---
 
@@ -368,17 +215,20 @@ The project implements automated Docker image building and publishing through Gi
 
 ### Workflows
 
-Two main workflows handle the build and push pipeline:
+Three workflows handle the CI/CD pipeline:
 
 - **`build.client.yml`**: Builds and pushes the React frontend image
-- **`build.serveur.yml`**: Builds and pushes the Node.js backend image, runs Jest unit tests and Bruno API tests
+- **`build.serveur.yml`**: Builds and pushes the Node.js backend image
+- **`test.yml`**: Runs the code-quality gate and backend tests before merge
 
 #### Trigger Conditions
 
 Workflows trigger on:
-- Push to `main` or `dev` branches
-- Only when relevant files change (client files for frontend, server files for backend)
-- Any changes to the workflow file itself
+- `build.client.yml`: push to `main` or `dev` when client files change
+- `build.serveur.yml`: push to `main` or `dev` when server files change
+- `test.yml`: push and pull request events targeting `main` or `dev`, when client or server files change
+
+The test workflow also watches `compose.test.yml` and the workflow file itself so CI stays in sync with the environment it uses.
 
 #### Image Tagging Strategy
 
@@ -388,6 +238,13 @@ Each build generates multiple tags for flexibility:
 - **Latest tag**: Added only on `main` branch
 - **Dev tag**: Added only on `dev` branch
 
+#### GHCR Registry Proof
+
+These screenshots show the images published to GitHub Container Registry and the versioned tags generated by the build workflow.
+
+![GHCR packages list](presentation-and-proof/image5.png)
+![Recent tagged image versions](presentation-and-proof/image6.png)
+
 #### Build Pipeline Steps
 
 1. Checkout code from repository
@@ -395,6 +252,47 @@ Each build generates multiple tags for flexibility:
 3. Extract and generate image metadata and tags
 4. Build Docker image and push to GHCR
 5. Generate security attestation (proves GitHub Actions built the image)
+
+### Code Quality: Linting and Formatting
+
+The `test.yml` workflow is the quality gate for pull requests and pushes. It is split by scope so client changes and server changes are validated independently.
+
+#### Lint Jobs
+
+- **`lint-client`**: runs only when `client/**` changes
+- **`lint-server`**: runs only when `server/**` changes
+
+Each lint job does two checks:
+- TypeScript type checking with `npx tsc --noEmit`
+- Prettier formatting validation on source files only
+
+Client formatting scope:
+- `client/src/**/*.{ts,tsx,js,jsx,css}`
+- `client/vite.config.ts`
+
+Server formatting scope:
+- `server/src/**/*.{ts,tsx,js,jsx}`
+- `server/jest.config.js`
+
+#### Behavior
+
+- If lint fails, the backend tests do not start
+- If only client files change, the client lint job runs and backend tests are skipped
+- If server files change, the server lint job runs first, then Jest and Bruno run after it passes
+
+#### Local Checks
+
+```bash
+cd client
+npx prettier@3 --check "src/**/*.{ts,tsx,js,jsx,css}" "vite.config.ts"
+npx tsc --noEmit
+```
+
+```bash
+cd server
+npx prettier@3 --check "src/**/*.{ts,tsx,js,jsx}" "jest.config.js"
+npx tsc --noEmit
+```
 
 ### Production Deployment
 
@@ -469,16 +367,17 @@ Both workflow files (`build.client.yml` and `build.serveur.yml`) include this st
 
 This step authenticates with Docker Hub BEFORE pulling base images, avoiding the rate limit.
 
-#### Updated Build Pipeline Steps
+#### Updated CI Flow
 
 1. Checkout code from repository
-2. **Run ESLint** - Validate code syntax (client only)
-3. Authenticate with Docker Hub (avoids rate limiting)
-4. Authenticate with GitHub Container Registry
-5. **Read version number** from VERSION file
-6. Extract and generate image metadata and tags
-7. Build Docker image and push to GHCR
-8. Generate security attestation
+2. Authenticate with Docker Hub (avoids rate limiting)
+3. Authenticate with GitHub Container Registry
+4. Read the version number from `VERSION`
+5. Extract and generate image metadata and tags
+6. Build Docker image and push to GHCR
+7. Generate security attestation
+
+The client build workflow still includes a lightweight optional `npm run lint --if-present` step, but the enforced lint gate lives in `test.yml`.
 
 ---
 
@@ -541,47 +440,16 @@ For dev branch with version `1.0.0`:
 
 ---
 
-### Code Quality: Linting
-
-#### ESLint for Client
-
-The client workflow includes an **ESLint** step to validate code syntax and catch common issues:
-
-```yaml
-- name: Run ESLint
-  working-directory: ./client
-  run: |
-    npm install
-    npm run lint --if-present || true
-```
-
-#### What It Does
-
-- Runs ESLint on the client code
-- Reports style violations and potential bugs
-- Uses the `|| true` flag to continue workflow even if linting fails (warnings only)
-
-#### Local Linting
-
-To lint locally before pushing:
-
-```bash
-cd client
-npm install
-npm run lint
-```
-
-To fix auto-fixable issues:
-
-```bash
-npm run lint -- --fix
-```
-
----
-
 ### Testing
 
-A dedicated **test workflow** (`test.yml`) runs automatically for pull requests targeting `main` and `dev`, and whenever changes are merged into those branches. It includes two independent jobs to validate backend functionality.
+A dedicated **test workflow** (`test.yml`) runs automatically for pull requests and pushes targeting `main` and `dev`. It includes scoped lint jobs plus backend validation.
+
+#### CI Flow
+
+1. Detect which part changed (`client` or `server`)
+2. Run the matching lint job(s)
+3. If server lint passes, run Jest and Bruno
+4. Upload Jest coverage and Bruno test artifacts
 
 #### Jest Unit Tests
 
@@ -595,7 +463,7 @@ A dedicated **test workflow** (`test.yml`) runs automatically for pull requests 
 
 ##### CI Pipeline
 
-The Jest job (`test-jest`) runs in the dedicated `test.yml` workflow:
+The Jest job (`test-jest`) runs in the dedicated `test.yml` workflow after the server lint gate:
 
 1. Checkout code
 2. Setup Node.js 20
@@ -645,7 +513,7 @@ Tests run sequentially (seq 1-4). The Login test saves the JWT token via `bru.se
 
 ##### CI Pipeline
 
-The Bruno job (`test-bruno`) is **independent** from other jobs (no `needs`). It builds the server locally using `compose.test.yml`:
+The Bruno job (`test-bruno`) also waits for the server lint gate and builds the server locally using `compose.test.yml`:
 
 1. Checkout code
 2. Build and start server + database (`docker compose -f compose.test.yml up -d --build`)
@@ -698,15 +566,25 @@ The `compose.test.yml` file is a lightweight compose configuration used exclusiv
 
 The `main` and `dev` branches are protected with GitHub Rulesets to ensure code quality before merging.
 
-#### Rules Configured
+#### Protection Setup
 
 - **Require a pull request before merging**: No direct push to `main` or `dev`, all changes must go through a PR
 - **Require status checks to pass**: The following types of checks must pass before a PR can be merged:
-  - Jest unit tests (job/context will include the `test-jest` job)
-  - Bruno API tests (job/context will include the `test-bruno` job)
+   - Jest unit tests (job/context will include the `test-jest` job)
+   - Bruno API tests (job/context will include the `test-bruno` job)
 
-  When configuring branch protection in GitHub, **do not type `test-jest` or `test-bruno` manually**. Instead, open a PR, let CI run, then go to the PR’s **Checks** tab and copy the exact status check context strings shown there (for example, they may appear as ``Tests / test-jest`` or similar). Use those exact context strings in the branch protection rule. If workflow or job names are renamed and the displayed check names change, update the branch protection rules accordingly; otherwise merges may be blocked even when CI succeeds.
-#### Workflow
+The lint jobs are part of the same workflow and run automatically before the tests. The required branch checks can stay on the test jobs because the tests cannot run if lint fails.
+
+When configuring branch protection in GitHub, **do not type `test-jest` or `test-bruno` manually**. Instead, open a PR, let CI run, then go to the PR’s **Checks** tab and copy the exact status check context strings shown there (for example, they may appear as `Tests / test-jest` or similar). Use those exact context strings in the branch protection rule. If workflow or job names are renamed and the displayed check names change, update the branch protection rules accordingly; otherwise merges may be blocked even when CI succeeds.
+
+#### Ruleset and Registry Proof
+
+These screenshots show the branch rules and registry setup that support the protected workflow.
+
+![Ruleset protecting main and dev](presentation-and-proof/image3.png)
+![Branch targeting criteria](presentation-and-proof/image4.png)
+
+#### Example Flow
 
 1. Create a feature branch from `main` or `dev`
 2. Make changes and push
@@ -714,10 +592,18 @@ The `main` and `dev` branches are protected with GitHub Rulesets to ensure code 
 4. Wait for CI checks to pass (Jest + Bruno)
 5. Merge only if all checks are green
 
-#### PR with Passing Tests
+#### Example PRs
 
-![PR with passing checks](image1.png)
+The screenshots below show the PR states you get while using the protected flow.
 
-#### PR with Failing Tests
+##### PR with Passing Tests
 
-![PR with failing checks](image2.png)
+![PR with passing checks](presentation-and-proof/image1.png)
+
+This is the expected PR state when CI passes and the branch is allowed to merge.
+
+##### PR with Failing Tests
+
+![PR with failing checks](presentation-and-proof/image2.png)
+
+This is the blocked PR state when one of the required checks fails.
