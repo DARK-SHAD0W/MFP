@@ -41,10 +41,14 @@ export default function AuthPage({
         <p className="eyebrow">Welcome</p>
         <h1>Save real places and find what is close to you.</h1>
         <p className="sub">
-          Create an account to store addresses, then search what is nearby using your
-          current location or a chosen point.
+          Create an account to store addresses, then search what is nearby using
+          your current location or a chosen point.
         </p>
-        <div className="segmented" role="tablist" aria-label="Choose sign in or sign up">
+        <div
+          className="segmented"
+          role="tablist"
+          aria-label="Choose sign in or sign up"
+        >
           <button
             type="button"
             className={isSignIn ? "active" : ""}
@@ -85,13 +89,22 @@ export default function AuthPage({
                 value={loginPassword}
                 onChange={(event) => setLoginPassword(event.target.value)}
                 placeholder="Your password"
+                autoComplete="current-password"
                 required
               />
             </label>
-            <button className="btn" type="submit" disabled={busyAction === "login"}>
+            <button
+              className="btn"
+              type="submit"
+              disabled={busyAction === "login"}
+            >
               Sign in
             </button>
-            <button type="button" className="link" onClick={() => setMode("signup")}>
+            <button
+              type="button"
+              className="link"
+              onClick={() => setMode("signup")}
+            >
               Need an account? Sign up
             </button>
           </form>
@@ -114,13 +127,22 @@ export default function AuthPage({
                 value={registerPassword}
                 onChange={(event) => setRegisterPassword(event.target.value)}
                 placeholder="Create a password"
+                autoComplete="new-password"
                 required
               />
             </label>
-            <button className="btn" type="submit" disabled={busyAction === "register"}>
+            <button
+              className="btn"
+              type="submit"
+              disabled={busyAction === "register"}
+            >
               Create account
             </button>
-            <button type="button" className="link" onClick={() => setMode("signin")}>
+            <button
+              type="button"
+              className="link"
+              onClick={() => setMode("signin")}
+            >
               Already have an account? Sign in
             </button>
           </form>

@@ -58,7 +58,9 @@ export default function PlacesSection({
             <AddressSearchInput
               value={placeSearch}
               onChange={setPlaceSearch}
-              onSelectSuggestion={(label, coords) => onPreviewSearch(coords, label)}
+              onSelectSuggestion={(label, coords) =>
+                onPreviewSearch(coords, label)
+              }
               placeholder="12 Rue de Rivoli, Paris"
               disabled={!isAuthed}
             />
@@ -104,10 +106,13 @@ export default function PlacesSection({
                       <div className="meta">{address.description}</div>
                     )}
                     <div className="meta">
-                      Lat {address.lat.toFixed(4)} · Lng {address.lng.toFixed(4)}
+                      Lat {address.lat.toFixed(4)} · Lng{" "}
+                      {address.lng.toFixed(4)}
                     </div>
                     {distance !== null && (
-                      <div className="meta">Distance: {distance.toFixed(2)} km</div>
+                      <div className="meta">
+                        Distance: {distance.toFixed(2)} km
+                      </div>
                     )}
                     <div className="meta">
                       Added {new Date(address.createdAt).toLocaleString()}
@@ -116,7 +121,9 @@ export default function PlacesSection({
                       <button
                         type="button"
                         className="chip"
-                        onClick={() => onUseOrigin({ lat: address.lat, lng: address.lng })}
+                        onClick={() =>
+                          onUseOrigin({ lat: address.lat, lng: address.lng })
+                        }
                       >
                         Use for nearby
                       </button>

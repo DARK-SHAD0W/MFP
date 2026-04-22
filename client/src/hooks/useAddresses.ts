@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Address } from "../types";
 
-type ApiFetchFn = <T,>(path: string, options?: RequestInit) => Promise<T>;
+type ApiFetchFn = <T>(path: string, options?: RequestInit) => Promise<T>;
 
 export function useAddresses(apiFetch: ApiFetchFn) {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -13,7 +13,8 @@ export function useAddresses(apiFetch: ApiFetchFn) {
       const data = await apiFetch<{ items: Address[] }>("/api/addresses");
       setAddresses(data.items);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to load addresses.";
+      const message =
+        error instanceof Error ? error.message : "Unable to load addresses.";
       onError(message);
     } finally {
       setBusyAction(null);
@@ -40,7 +41,8 @@ export function useAddresses(apiFetch: ApiFetchFn) {
       setAddresses((current) => [data.item, ...current]);
       onSuccess(data.item);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to add place.";
+      const message =
+        error instanceof Error ? error.message : "Unable to add place.";
       onError(message);
     } finally {
       setBusyAction(null);

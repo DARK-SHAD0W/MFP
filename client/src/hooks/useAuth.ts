@@ -1,23 +1,15 @@
 import { useState } from "react";
 import type { User } from "../types";
 
-const TOKEN_KEY = "mfp_token";
+type ApiFetchFn = <T>(path: string, options?: RequestInit) => Promise<T>;
 
-type ApiFetchFn = <T,>(path: string, options?: RequestInit) => Promise<T>;
-
-export function useAuth(apiFetch: ApiFetchFn) {
-  const [token, setTokenState] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
+export function useAuth(
+  apiFetch: ApiFetchFn,
+  token: string,
+  setToken: (t: string) => void,
+) {
   const [me, setMe] = useState<User | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
-
-  const setToken = (newToken: string) => {
-    if (newToken) {
-      localStorage.setItem(TOKEN_KEY, newToken);
-    } else {
-      localStorage.removeItem(TOKEN_KEY);
-    }
-    setTokenState(newToken);
-  };
 
   const loadMe = async (onError: (msg: string) => void) => {
     setBusyAction("me");
@@ -26,7 +18,8 @@ export function useAuth(apiFetch: ApiFetchFn) {
       setMe(data.item);
     } catch (error) {
       setMe(null);
-      const message = error instanceof Error ? error.message : "Unable to fetch user.";
+      const message =
+        error instanceof Error ? error.message : "Unable to fetch user.";
       if (message === "access denied") {
         logout(onError);
       } else {
@@ -51,7 +44,8 @@ export function useAuth(apiFetch: ApiFetchFn) {
       });
       onSuccess();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to create account.";
+      const message =
+        error instanceof Error ? error.message : "Unable to create account.";
       onError(message);
     } finally {
       setBusyAction(null);
@@ -73,7 +67,8 @@ export function useAuth(apiFetch: ApiFetchFn) {
       setToken(data.token);
       onSuccess();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to login.";
+      const message =
+        error instanceof Error ? error.message : "Unable to login.";
       onError(message);
     } finally {
       setBusyAction(null);

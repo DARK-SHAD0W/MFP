@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Address, Coordinates } from "../types";
 
-type ApiFetchFn = <T,>(path: string, options?: RequestInit) => Promise<T>;
+type ApiFetchFn = <T>(path: string, options?: RequestInit) => Promise<T>;
 
 export function useNearbySearch(apiFetch: ApiFetchFn) {
   const [nearby, setNearby] = useState<Address[]>([]);
@@ -20,15 +20,20 @@ export function useNearbySearch(apiFetch: ApiFetchFn) {
 
     setBusyAction("nearby");
     try {
-      const data = await apiFetch<{ items: Address[] }>("/api/addresses/searches", {
-        method: "POST",
-        body: JSON.stringify({ radius, from }),
-      });
+      const data = await apiFetch<{ items: Address[] }>(
+        "/api/addresses/searches",
+        {
+          method: "POST",
+          body: JSON.stringify({ radius, from }),
+        },
+      );
       setNearby(data.items);
       onSuccess(data.items.length);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to search nearby places.";
+        error instanceof Error
+          ? error.message
+          : "Unable to search nearby places.";
       onError(message);
     } finally {
       setBusyAction(null);

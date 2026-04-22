@@ -122,10 +122,13 @@ export default function NearbySection({
                       <div className="meta">{address.description}</div>
                     )}
                     <div className="meta">
-                      Lat {address.lat.toFixed(4)} · Lng {address.lng.toFixed(4)}
+                      Lat {address.lat.toFixed(4)} · Lng{" "}
+                      {address.lng.toFixed(4)}
                     </div>
                     {distance !== null && (
-                      <div className="meta">Distance: {distance.toFixed(2)} km</div>
+                      <div className="meta">
+                        Distance: {distance.toFixed(2)} km
+                      </div>
                     )}
                   </li>
                 );

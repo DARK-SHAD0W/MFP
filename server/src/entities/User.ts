@@ -11,17 +11,17 @@ import { Address } from "./Address";
 @Entity()
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  email: string;
+  email!: string;
 
   @Column()
-  hashedPassword: string;
+  hashedPassword!: string;
 
   @OneToMany(() => Address, (address) => address.user)
-  addresses: Address[];
+  addresses!: Address[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

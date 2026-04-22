@@ -25,7 +25,9 @@ export default function UserCard({
         <div className="stack">
           <div className="title">{me.email}</div>
           <div className="meta">User ID: {me.id}</div>
-          <div className="meta">Joined: {new Date(me.createdAt).toLocaleString()}</div>
+          <div className="meta">
+            Joined: {new Date(me.createdAt).toLocaleString()}
+          </div>
         </div>
       ) : (
         <p className="meta">Log in to see your profile.</p>

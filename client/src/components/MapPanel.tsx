@@ -23,7 +23,11 @@ function buildMapLink(coords: Coordinates): string {
   return `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=16/${coords.lat}/${coords.lng}`;
 }
 
-export default function MapPanel({ coordinates, title, addressLabel }: MapPanelProps) {
+export default function MapPanel({
+  coordinates,
+  title,
+  addressLabel,
+}: MapPanelProps) {
   return (
     <div className="card map-card">
       <div className="card-title">
@@ -42,10 +46,16 @@ export default function MapPanel({ coordinates, title, addressLabel }: MapPanelP
           </div>
           <div className="stack">
             <div className="meta">
-              Lat {coordinates.lat.toFixed(5)} · Lng {coordinates.lng.toFixed(5)}
+              Lat {coordinates.lat.toFixed(5)} · Lng{" "}
+              {coordinates.lng.toFixed(5)}
             </div>
             {addressLabel && <div className="title">{addressLabel}</div>}
-            <a className="link" href={buildMapLink(coordinates)} target="_blank" rel="noreferrer">
+            <a
+              className="link"
+              href={buildMapLink(coordinates)}
+              target="_blank"
+              rel="noreferrer"
+            >
               Open in OpenStreetMap
             </a>
           </div>

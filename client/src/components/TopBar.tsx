@@ -12,7 +12,9 @@ export default function TopBar({ isAuthed, me, onLogout }: TopBarProps) {
       <div>
         <div className="brand">My Favorite Places</div>
         <div className="meta">
-          {isAuthed ? `Signed in as ${me?.email ?? "user"}` : "Plan and save your places"}
+          {isAuthed
+            ? `Signed in as ${me?.email ?? "user"}`
+            : "Plan and save your places"}
         </div>
       </div>
       <div className="topbar-right">
