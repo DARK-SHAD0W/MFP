@@ -54,7 +54,7 @@ jobs:
       # Cela crée plusieurs étiquettes pour la même image :
       # - Nom de la branche (main, dev)
       # - SHA du commit (main-a1b2c3d ou dev-x9y8z7w)
-      # - Numéro de version (v1.0.0)
+      # - Numéro de version (v1.0.2) uniquement sur la branche principale
       # - « latest » (uniquement sur la branche main)
       # - « dev » (uniquement sur la branche dev)
       - name: Extract metadata (tags, labels) for Docker
@@ -65,7 +65,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
-            type=raw,value=v${{ steps.version.outputs.VERSION }}
+            type=raw,value=v${{ steps.version.outputs.VERSION }},enable={{is_default_branch}}
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
@@ -76,6 +76,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ./server  # Utiliser le Dockerfile dans le dossier server/
+          file: ./server/Dockerfile.prod # Spécifier le Dockerfile de production
           push: true  # Envoyer au registre (ne pas juste construire localement)
           tags: ${{ steps.meta.outputs.tags }}  # Utiliser les étiquettes générées à l'étape précédente
           labels: ${{ steps.meta.outputs.labels }}  # Ajouter des étiquettes de métadonnées
@@ -87,4 +88,3 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
-

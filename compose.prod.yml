@@ -3,11 +3,11 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: mfp-user
-      POSTGRES_PASSWORD: mfp-pswrd
-      POSTGRES_DB: mfp-db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:${DB_CONTAINER_PORT}"
     volumes:
       - db-data:/var/lib/postgresql/data
     networks:
@@ -21,26 +21,24 @@ services:
   server:
     #build:
     #  context: ./server
-    image: ghcr.io/dark-shad0w/mfp/server:main
+    image: ghcr.io/dark-shad0w/mfp/server:v${APP_VERSION}
     restart: unless-stopped
     environment:
-      PORT: 3000
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: mfp-user
-      DB_PASSWORD: mfp-pswrd
-      DB_NAME: mfp-db
+      PORT: ${SERVER_CONTAINER_PORT}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_CONTAINER_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
     ports:
-      - "3000:3000"
-    volumes:
-      - ./server/src:/app/src
+      - "${SERVER_PORT}:${SERVER_CONTAINER_PORT}"
     networks:
       - mfp-network
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:${SERVER_CONTAINER_PORT}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -48,19 +46,17 @@ services:
   client:
     #build:
     #  context: ./client
-    image: ghcr.io/dark-shad0w/mfp/client:main
+    image: ghcr.io/dark-shad0w/mfp/client:v${APP_VERSION}
     restart: unless-stopped
     ports:
-      - "5173:5173"
-    volumes:
-      - ./client/src:/app/src
+      - "${CLIENT_PORT}:${CLIENT_PROD_CONTAINER_PORT}"
     networks:
       - mfp-network
     depends_on:
       server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:5173 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:${CLIENT_PROD_CONTAINER_PORT} || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
