@@ -1,4 +1,6 @@
 import { DataSource } from "typeorm";
+import { User } from "./entities/User";
+import { Address } from "./entities/Address";
 
 const dbHost = process.env.DB_HOST || "localhost";
 const dbPort = process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432;
@@ -16,7 +18,7 @@ const datasource = new DataSource({
   username: dbUser,
   password: dbPassword,
   database: dbName,
-  entities: ["./src/entities/**/*.{js,ts}"],
+  entities: [User, Address],
   logging: dbLogging,
   synchronize: true,
 });
