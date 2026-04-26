@@ -71,3 +71,4 @@ npm run preview
 
 - If API calls fail, ensure server is running on `http://localhost:3000`.
 - If port 5173 is busy, stop existing Vite processes and restart `npm run dev`.
+
