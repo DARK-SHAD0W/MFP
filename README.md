@@ -5,22 +5,33 @@ A modern web application to discover, save, and manage your favorite places. Bui
 ## Requirements
 
 - **Docker** & **Docker Compose**
+- **PowerShell** (or a compatible shell) to generate `.env` from `.env.local` and `VERSION`
 - Node.js 18+ (for local development without Docker)
 
 ## Project Architecture
 
 ```bash
 MFP (My Favorite Places)
-├── client/          # React 18 + Vite frontend (Port 5173)
-├── server/          # Node.js/Express backend (Port 3000)
-├── compose.yml      # Docker Compose for local development
-├── compose.prod.yml # Docker Compose for production (pulls from GHCR)
-└── compose.test.yml # Docker Compose for CI testing (builds locally)
+├── client/                  # React + Vite frontend (Port 5173 in local dev)
+├── client/Dockerfile        # Docker image for local development
+├── client/Dockerfile.prod   # Docker image for production build
+├── server/                  # Node.js/Express backend (Port 3000)
+├── server/Dockerfile        # Docker image for local development
+├── server/Dockerfile.prod   # Docker image for production build
+├── compose.yml              # Docker Compose for local development
+├── compose.prod.yml         # Docker Compose for production (pulls versioned images from GHCR)
+├── compose.test.yml         # Docker Compose for CI testing (builds locally)
+├── VERSION                  # Single source of truth for released image version
+├── .env.local               # Template for environment variables
+└── scripts/generate-env.ps1 # Generates .env from .env.local and VERSION
 ```
 
 - **Frontend (Client)**: React application with Vite
 - **Backend (Server)**: Express.js with TypeORM and PostgreSQL
 - **Database**: PostgreSQL 16 Alpine
+- **Local development** uses the original Dockerfiles and `compose.yml`
+- **Production-oriented images** use `Dockerfile.prod` files and `compose.prod.yml`
+- **Image versioning** is driven by the root `VERSION` file
 
 ## Docker Fundamentals
 
@@ -51,18 +62,29 @@ It creates a **Docker image** (a static template/snapshot).
 ---
 
 ## Quick Start
+### Generate the `.env` file from `VERSION`
+
+Before running Docker Compose, generate the `.env` file from `.env.local` and the root `VERSION` file:
+or simply copy the content into a .env and change the correct version from the root version file 
+
+```powershell
+.\scripts\generate-env.ps1
+```
 
 ### Start the application
 ```bash
 docker compose up
 ```
-Builds and starts all services: PostgreSQL, Express server, React client.
-
+Builds and starts all local development services: PostgreSQL, Express server, and React client.
+This uses:
+- compose.yml
+- nserver/Dockerfile
+- client/Dockerfile
 ### Start with fresh builds (rebuild images)
 ```bash
 docker compose up --build
 ```
-Use after updating code, dependencies, or Dockerfiles.
+Use after updating code, dependencies, or the local development Dockerfiles.
 
 ### Start in background (detached mode)
 ```bash
@@ -84,6 +106,14 @@ docker compose down -v
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3000
 - **Database**: localhost:5432
+
+### Environment Variable Source
+
+The project uses:
+
+* `VERSION` as the source of truth for production image versioning
+* `.env.local` as the local template for ports and database variables
+* `scripts/generate-env.ps1` to generate `.env` before running Compose commands that depend on the current version
 
 ---
 
@@ -191,17 +221,28 @@ docker volume rm mfp-db-data
 docker compose up db
 ```
 
-### Tag and push images to Docker Hub
+### Tag and push images manually (example)
+
+In this project, production images are automatically built and pushed by GitHub Actions to **GitHub Container Registry (GHCR)**.
+
+Example manual Docker tagging syntax:
+
 ```bash
-docker tag mfp-server:latest username/mfp-server:1.0
-docker push username/mfp-server:1.0
+docker tag my-image:latest my-image:v1.0.0
+docker push my-image:v1.0.0
 ```
 
 ---
 
 ## Using Production Compose File
 
-The `compose.prod.yml` file pulls pre-built images from GitHub Container Registry (GHCR) instead of building locally.
+The `compose.prod.yml` file pulls **versioned pre-built images** from GitHub Container Registry (GHCR) instead of building locally.
+
+It uses:
+
+* the root `VERSION` file
+* the generated `.env` file
+* `Dockerfile.prod` images built by GitHub Actions
 
 ## CI/CD Pipeline
 
@@ -209,13 +250,27 @@ The `compose.prod.yml` file pulls pre-built images from GitHub Container Registr
 
 The project implements automated Docker image building and publishing through GitHub Actions workflows. Images are automatically built on code changes and pushed to GitHub Container Registry (GHCR).
 
+Local development and production images are intentionally separated:
+
+* local development uses `Dockerfile` files and `compose.yml`
+* production-oriented builds use `Dockerfile.prod` files and `compose.prod.yml`
+
 ### Workflows
 
 Three workflows handle the CI/CD pipeline:
 
-- **`build.client.yml`**: Builds and pushes the React frontend image
-- **`build.serveur.yml`**: Builds and pushes the Node.js backend image
+- **`build.client.yml`**: Builds and pushes the production frontend image using `client/Dockerfile.prod`
+- **`build.serveur.yml`**: Builds and pushes the production backend image using `server/Dockerfile.prod`
 - **`test.yml`**: Runs the code-quality gate and backend tests before merge
+
+### Dev vs Production Dockerfiles
+
+The project intentionally uses different Dockerfiles for different purposes:
+
+* **`client/Dockerfile`** and **`server/Dockerfile`** are used for local development
+* **`client/Dockerfile.prod`** and **`server/Dockerfile.prod`** are used for production-oriented image builds in CI
+
+This keeps local development convenient while keeping production images cleaner and more stable.
 
 #### Trigger Conditions
 
@@ -231,6 +286,7 @@ The test workflow also watches `compose.test.yml` and the workflow file itself s
 Each build generates multiple tags for flexibility:
 - **Branch name tag**: `main` or `dev`
 - **Commit SHA tag**: `main-a1b2c3d` or `dev-x9y8z7w` (for version tracking)
+- **Version tag**: `vX.Y.Z`, generated from the root `VERSION` file on the main branch
 - **Latest tag**: Added only on `main` branch
 - **Dev tag**: Added only on `dev` branch
 
@@ -244,10 +300,12 @@ These screenshots show the images published to GitHub Container Registry and the
 #### Build Pipeline Steps
 
 1. Checkout code from repository
-2. Authenticate with GitHub Container Registry
-3. Extract and generate image metadata and tags
-4. Build Docker image and push to GHCR
-5. Generate security attestation (proves GitHub Actions built the image)
+2. Authenticate with Docker Hub (to avoid rate limiting on base image pulls)
+3. Authenticate with GitHub Container Registry
+4. Read the version number from the root `VERSION` file
+5. Extract and generate image metadata and tags
+6. Build the production Docker image and push it to GHCR
+7. Generate security attestation (proves GitHub Actions built the image)
 
 ### Code Quality: Linting and Formatting
 
@@ -292,7 +350,15 @@ npx tsc --noEmit
 
 ### Production Deployment
 
-The `compose.prod.yml` file pulls pre-built images from GHCR instead of building locally:
+The `compose.prod.yml` file pulls pre-built versioned images from GHCR instead of building locally.
+
+Before running the production compose file, generate `.env` from `.env.local` and `VERSION`:
+
+```powershell
+.\scripts\generate-env.ps1
+```
+
+Then start the production-oriented stack:
 
 ```bash
 docker compose -f compose.prod.yml up
@@ -300,16 +366,23 @@ docker compose -f compose.prod.yml up
 
 This separates development (local builds) from production (pre-built images):
 
-| Scenario | Command | What Happens |
-|----------|---------|--------------|
-| **Local Development** | `docker compose up --build` | Builds images locally from Dockerfile |
-| **Production** | `docker compose -f compose.prod.yml up` | Pulls pre-built images from GHCR |
-| **Dev Branch Images** | Edit image tags to `:dev` in compose.prod.yml | Pulls development branch images |
+| Scenario              | Command                                       | What Happens                                       |
+| --------------------- | --------------------------------------------- | -------------------------------------------------- |
+| **Local Development** | `docker compose up --build`                   | Builds images locally from development Dockerfiles |
+| **Production**        | `docker compose -f compose.prod.yml up`       | Pulls versioned images from GHCR                   |
+| **Dev Branch Images** | Edit image tags to `:dev` in compose.prod.yml | Pulls development branch images                    |
+
+Production image references use the version generated from the root `VERSION` file through the generated `.env` file.
 
 ### Update Images in Production
 
+```powershell
+# Regenerate .env from the current VERSION file
+.\scripts\generate-env.ps1
+```
+
 ```bash
-# Pull latest images from registry
+# Pull versioned images from registry
 docker compose -f compose.prod.yml pull
 
 # Restart services with updated images
@@ -384,11 +457,11 @@ The enforced lint gate lives in `test.yml`, where client and server lint jobs ru
 The project uses a **VERSION** file at the root to manage semantic versioning:
 
 ```
-VERSION file: 1.0.0
+VERSION file: 1.0.2
 ```
 
 Each build automatically generates images with the following tags:
-- `v1.0.0` (semantic version)
+- `v1.0.2` (semantic version)
 - `main-a1b2c3d` (commit SHA on main)
 - `latest` (on main branch only)
 - `dev` (on dev branch only)
@@ -423,16 +496,19 @@ To bump the version:
 
 #### Image Tags Example
 
-For version `1.0.0`:
-- `ghcr.io/owner/mfp/client:v1.0.0` ← Semantic version tag
-- `ghcr.io/owner/mfp/client:main-a1b2c3d` ← Commit SHA
-- `ghcr.io/owner/mfp/client:latest` ← Latest on main
-- `ghcr.io/owner/mfp/client:main` ← Branch name
+For version `1.0.2` on the main branch:
 
-For dev branch with version `1.0.0`:
-- `ghcr.io/owner/mfp/client:v1.0.0` ← Semantic version (shared)
-- `ghcr.io/owner/mfp/client:dev-x9y8z7w` ← Dev commit SHA
-- `ghcr.io/owner/mfp/client:dev` ← Dev branch tag
+* `ghcr.io/owner/mfp/client:v1.0.2` ← Semantic version tag
+* `ghcr.io/owner/mfp/client:main-a1b2c3d` ← Commit SHA
+* `ghcr.io/owner/mfp/client:latest` ← Latest on main
+* `ghcr.io/owner/mfp/client:main` ← Branch name
+
+For the dev branch:
+
+* `ghcr.io/owner/mfp/client:dev-x9y8z7w` ← Dev commit SHA
+* `ghcr.io/owner/mfp/client:dev` ← Dev branch tag
+
+The semantic version tag is reserved for the main branch build.
 
 ---
 
@@ -550,11 +626,11 @@ server/bruno-tests/
 
 The `compose.test.yml` file is a lightweight compose configuration used exclusively by CI for Bruno tests. Unlike `compose.prod.yml` (which pulls images from GHCR), it builds the server image from source:
 
-| File | Server Image | Services | Purpose |
-|------|-------------|----------|---------|
-| **compose.yml** | Builds locally | db, server, client | Local development |
-| **compose.prod.yml** | Pulls from GHCR | db, server, client | Production deployment |
-| **compose.test.yml** | Builds locally | db, server | CI testing (Bruno) |
+| File                 | Server Image                                | Services           | Purpose               |
+| -------------------- | ------------------------------------------- | ------------------ | --------------------- |
+| **compose.yml**      | Builds locally from development Dockerfiles | db, server, client | Local development     |
+| **compose.prod.yml** | Pulls versioned images from GHCR            | db, server, client | Production deployment |
+| **compose.test.yml** | Builds locally                              | db, server         | CI testing (Bruno)    |
 
 ---
 

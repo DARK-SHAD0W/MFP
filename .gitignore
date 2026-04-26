@@ -1,3 +1,11 @@
 node_modules/
 dist/
 .vscode
+coverage/
+.env
+*.sqlite
+server/coverage/
+server/bruno-tests/results.json
+server/bruno-tests/results.html
+mfp-db.session.sql
+.claude
